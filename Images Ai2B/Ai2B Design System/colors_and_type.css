@@ -1,0 +1,147 @@
+/* ─────────────────────────────────────────────
+   Ai2B — Colors & Typography
+   Dark-only. Single accent (#FF5A1F).
+   Source: Ai2B/src/app/globals.css
+   ───────────────────────────────────────────── */
+
+:root {
+  /* ── Surfaces (dark stack) ───────────────── */
+  --bg:       #0A0A0F;   /* page */
+  --surface:  #111117;   /* cards */
+  --surface2: #16161E;   /* inner / nested */
+  --border:   #242430;   /* default hairline */
+  --border-2: #2F2F3D;   /* hover / emphasized hairline */
+
+  /* ── Foreground ──────────────────────────── */
+  --text:   #F5F5F7;     /* primary copy, headings */
+  --muted:  #A8A8B4;     /* secondary, labels, rows */
+  --subtle: #6E6E7C;     /* tertiary, placeholder */
+
+  /* ── Accent (the only brand hue) ─────────── */
+  --accent:       #FF5A1F;
+  --accent-soft:  #FF7A3F;   /* hover */
+  --accent-wash:  rgba(255, 90, 31, 0.10);   /* icon-chip bg */
+  --accent-glow:  rgba(255, 90, 31, 0.35);   /* shadow/halo */
+
+  /* ── Per-agent hues ──────────────────────── */
+  /* Used ONLY inside agent cards (chat bubbles, */
+  /* pipeline fills, header dot, ambient halo).  */
+  --agent-sales:    #FF5A1F;  /* reuses brand accent */
+  --agent-support:  #E85D75;
+  --agent-ops:      #FFB84D;
+  --agent-research: #6EA8FE;
+
+  /* ── Type families ───────────────────────── */
+  --font-display: "Geist", -apple-system, "SF Pro Display", system-ui, sans-serif;
+  --font-body:    "Geist", -apple-system, "SF Pro Text", system-ui, sans-serif;
+  --font-mono:    "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* ── Motion ──────────────────────────────── */
+  --ease-out:     cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out:  cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast:     180ms;
+  --dur-base:     240ms;
+  --dur-medium:   350ms;
+  --dur-slow:     700ms;
+
+  /* ── Radii ───────────────────────────────── */
+  --radius-sm:   8px;
+  --radius-md:   10px;   /* buttons */
+  --radius-lg:   14px;   /* cards */
+  --radius-xl:   16px;
+  --radius-2xl:  24px;
+  --radius-pill: 999px;  /* nav, industry pills */
+
+  /* ── Spacing (8-based) ───────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+  --space-10: 128px;   /* section gutters ≥768 */
+
+  /* ── Shadows ─────────────────────────────── */
+  --shadow-card:    0 20px 60px -30px rgba(0, 0, 0, 0.70),
+                    inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  --shadow-cta:     0 1px 0 rgba(255,255,255,0.15) inset,
+                    0 6px 18px -6px var(--accent-glow);
+  --shadow-cta-hv:  0 1px 0 rgba(255,255,255,0.18) inset,
+                    0 12px 26px -8px var(--accent-glow);
+  --shadow-nav:     0 8px 24px -14px rgba(0, 0, 0, 0.6);
+  --shadow-popover: 0 24px 48px -16px rgba(0, 0, 0, 0.7);
+}
+
+/* ────────────────────────────────────────────
+   Semantic typography
+   Source: .heading / .heading-tight / .label-*
+   ──────────────────────────────────────────── */
+
+.h1, .heading {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  color: var(--text);
+}
+
+.h1 { font-size: clamp(2.75rem, 8vw, 6.25rem); }       /* Hero */
+.h2 { font-size: clamp(2rem, 5vw, 3.75rem); font-family: var(--font-display); font-weight: 600; line-height: 1.05; letter-spacing: -0.035em; color: var(--text); }
+.h3 { font-size: clamp(2.25rem, 5vw, 3.75rem); font-family: var(--font-display); font-weight: 600; line-height: 1.05; letter-spacing: -0.035em; color: var(--text); }
+
+.heading-tight, .h4 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.022em;
+  color: var(--text);
+}
+.h4 { font-size: 1.25rem; }     /* card titles */
+.h5 { font-size: 1.125rem; font-family: var(--font-display); font-weight: 500; letter-spacing: -0.022em; color: var(--text); }
+
+.body {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.55;
+  letter-spacing: -0.011em;
+  color: var(--text);
+}
+.body-lg { font-size: 1.125rem; line-height: 1.55; color: rgba(245,245,247,0.85); }
+.body-sm { font-size: 0.875rem; line-height: 1.5;  color: var(--muted); }
+.body-muted { color: var(--muted); }
+
+/* Eyebrows — the signature mono label */
+.label-mono {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;       /* 11.5px */
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+}
+.label-mono-accent {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--accent);
+}
+
+.code, code, pre, .mono {
+  font-family: var(--font-mono);
+  font-feature-settings: "ss01", "cv11";
+}
+
+/* ────────────────────────────────────────────
+   Reduced motion
+   ──────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

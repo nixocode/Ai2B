@@ -1,0 +1,18 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Motion</title><link rel="stylesheet" href="_card.css"></head>
+<body><div class="wrap">
+  <p class="label-mono" style="margin:0 0 14px">Motion grammar</p>
+  <div style="font-family:var(--font-mono);font-size:12px;line-height:1.8;color:var(--muted)">
+    <div><span style="color:var(--text)">ease-out</span> &nbsp;cubic-bezier(0.22, 1, 0.36, 1) &nbsp;<span style="color:var(--subtle)">— primary</span></div>
+    <div><span style="color:var(--text)">ease-in-out</span> &nbsp;cubic-bezier(0.65, 0, 0.35, 1)</div>
+    <div style="margin-top:10px"><span style="color:var(--text)">180ms</span> &nbsp;hover · link color · nav pill</div>
+    <div><span style="color:var(--text)">240ms</span> &nbsp;state change · card border</div>
+    <div><span style="color:var(--text)">350ms</span> &nbsp;reveal · message bubble</div>
+    <div><span style="color:var(--text)">500ms</span> &nbsp;panel segment activation</div>
+    <div><span style="color:var(--text)">700ms</span> &nbsp;hero stagger · sticky intro</div>
+    <div style="margin-top:10px;color:var(--text)">Enter — y:20→0, opacity 0→1, stagger 80ms</div>
+    <div style="color:var(--text)">Never — rotate, bounce (except scroll arrow), pulse (except hero dot)</div>
+  </div>
+  <div style="margin-top:16px;padding:12px;border:1px solid var(--border);border-radius:10px;font-family:var(--font-mono);font-size:11px;color:var(--muted)">
+    all motion gated by<br><span style="color:var(--accent)">@media (prefers-reduced-motion: reduce)</span>
+  </div>
+</div></body></html>

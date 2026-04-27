@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="40" viewBox="0 0 160 40" aria-label="Ai2B">
+  <defs>
+    <radialGradient id="g2" cx="30%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#FF8A55"></stop>
+      <stop offset="60%" stop-color="#FF5A1F"></stop>
+      <stop offset="100%" stop-color="#C73E0F"></stop>
+    </radialGradient>
+  </defs>
+  <circle cx="18" cy="20" r="11" fill="url(#g2)"></circle>
+  <circle cx="18" cy="20" r="1.8" fill="#0A0A0F"></circle>
+  <text x="38" y="26" font-family="Geist, system-ui, sans-serif" font-weight="500" font-size="18" letter-spacing="-0.022em" fill="#F5F5F7">Ai2B</text>
+</svg>

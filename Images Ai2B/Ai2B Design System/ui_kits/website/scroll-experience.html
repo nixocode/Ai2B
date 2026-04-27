@@ -1,0 +1,683 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ai2B — Scroll Experience</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #060609; color: var(--text); font-family: var(--font-body); overflow-x: hidden; }
+  body { letter-spacing: -0.011em; -webkit-font-smoothing: antialiased; }
+
+  /* fixed canvas backdrop */
+  #stage {
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 110%, rgba(255,90,31,.18), transparent 65%),
+      radial-gradient(ellipse 60% 80% at 100% 0%, rgba(110,168,254,.10), transparent 70%),
+      radial-gradient(ellipse 70% 60% at 0% 50%, rgba(232,93,117,.08), transparent 70%),
+      #060609;
+  }
+  #stage canvas { display: block; width: 100%; height: 100%; }
+
+  /* grain */
+  .grain { position: fixed; inset: 0; pointer-events: none; z-index: 90; opacity: .04;
+    background-image: url('../../assets/noise.svg'); background-size: 160px; mix-blend-mode: overlay; }
+
+  /* sysbar */
+  .sysbar {
+    position: fixed; top: 0; left: 0; right: 0; height: 28px; z-index: 100;
+    display: flex; align-items: center; gap: 18px; padding: 0 18px;
+    font-family: var(--font-mono); font-size: 10.5px; color: var(--subtle);
+    text-transform: uppercase; letter-spacing: 0.18em;
+    background: rgba(6,6,9,.7); backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,.04);
+  }
+  .sysbar .live::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 999px; background: var(--accent); margin-right: 8px; box-shadow: 0 0 10px var(--accent); animation: pulse 2.2s infinite; vertical-align: 1px; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .sysbar .sep { color: rgba(255,255,255,.12); }
+  .sysbar .scroll-pct { margin-left: auto; color: var(--text); }
+
+  /* progress rail (right) */
+  .rail {
+    position: fixed; top: 50%; right: 18px; transform: translateY(-50%); z-index: 50;
+    display: flex; flex-direction: column; gap: 18px; align-items: flex-end;
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.2em;
+  }
+  .rail .tick {
+    display: flex; align-items: center; gap: 10px; color: var(--subtle);
+    text-transform: uppercase; cursor: pointer; transition: color .25s;
+  }
+  .rail .tick .bar { display: inline-block; width: 24px; height: 1px; background: currentColor; opacity: .4; transition: width .35s, opacity .35s, background .35s; }
+  .rail .tick.active { color: var(--text); }
+  .rail .tick.active .bar { width: 56px; opacity: 1; background: var(--accent); }
+
+  /* corner marks */
+  .marks { position: fixed; inset: 36px 14px 14px; z-index: 40; pointer-events: none; }
+  .marks span { position: absolute; width: 14px; height: 14px; border: 1px solid rgba(255,255,255,.16); }
+  .marks .tl { top: 0; left: 0; border-right: none; border-bottom: none; }
+  .marks .tr { top: 0; right: 0; border-left: none; border-bottom: none; }
+  .marks .bl { bottom: 0; left: 0; border-right: none; border-top: none; }
+  .marks .br { bottom: 0; right: 0; border-left: none; border-top: none; }
+
+  /* scroll container — drives 0..1 */
+  .scroller { position: relative; z-index: 10; }
+  /* total scroll: 6 acts × 100vh = 600vh */
+  .scroller .act { height: 100vh; position: relative; }
+
+  /* HUD overlay (always visible, content swaps) */
+  .hud { position: fixed; inset: 36px 14px 14px; z-index: 30; pointer-events: none; }
+  .hud .panel {
+    position: absolute; opacity: 0; transition: opacity .6s var(--ease-out), transform .6s var(--ease-out);
+    transform: translateY(12px);
+  }
+  .hud .panel.on { opacity: 1; transform: none; pointer-events: auto; }
+
+  /* shared text styles */
+  .eyebrow { font-family: var(--font-mono); font-size: 10.5px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.22em; color: var(--accent); }
+  .h-display { font-family: var(--font-display); font-weight: 600; line-height: 0.96; letter-spacing: -0.04em; color: var(--text); }
+  .copy { font-size: 16px; line-height: 1.55; color: rgba(245,245,247,.78); max-width: 38ch; }
+  .mono-row { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+
+  /* ── PANEL 0: title ── */
+  .p0 { left: 7vw; bottom: 12vh; max-width: 720px; }
+  .p0 .eyebrow { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
+  .p0 .eyebrow .ln { width: 80px; height: 1px; background: var(--accent); opacity: .6; }
+  .p0 h1 { font-size: clamp(56px, 9vw, 132px); }
+  .p0 h1 .accent { color: var(--accent); }
+  .p0 h1 .muted { color: rgba(245,245,247,.32); font-style: italic; font-weight: 400; }
+  .p0 .legend { position: absolute; right: 7vw; bottom: 0; text-align: right; }
+  .p0 .legend .k { color: var(--text); font-size: 11px; letter-spacing: 0.12em; margin-bottom: 4px; }
+
+  /* ── PANEL 1: agents fan-out ── */
+  .p1 { left: 7vw; top: 18vh; max-width: 540px; }
+  .p1 h2 { font-size: clamp(40px, 5vw, 68px); margin-top: 18px; margin-bottom: 24px; }
+  .agent-readout { position: absolute; right: 7vw; top: 18vh; width: 320px; }
+  .agent-readout .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,.08); font-family: var(--font-mono); font-size: 11px; }
+  .agent-readout .row .k { color: var(--subtle); letter-spacing: 0.14em; text-transform: uppercase; }
+  .agent-readout .row .v { color: var(--text); }
+  .agent-readout .row .v .pulse { color: var(--accent); }
+
+  /* ── PANEL 2-5 individual agent zooms ── */
+  .pa { left: 7vw; bottom: 14vh; max-width: 560px; }
+  .pa .agent-tag { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 12px; }
+  .pa .agent-tag .dot { width: 8px; height: 8px; border-radius: 999px; box-shadow: 0 0 12px currentColor; }
+  .pa h3 { font-family: var(--font-display); font-weight: 600; font-size: clamp(48px, 6.5vw, 88px); line-height: 0.96; letter-spacing: -0.04em; margin-bottom: 18px; }
+  .pa .lede { font-size: 17px; line-height: 1.5; color: var(--text); max-width: 30ch; margin-bottom: 24px; }
+  .pa ul { list-style: none; display: flex; flex-direction: column; gap: 10px; max-width: 38ch; }
+  .pa ul li { display: flex; gap: 12px; font-size: 14px; color: var(--muted); }
+  .pa ul li::before { content: ""; flex-shrink: 0; width: 18px; height: 1px; background: currentColor; opacity: .5; margin-top: 9px; }
+
+  /* live telemetry on right */
+  .telem { position: absolute; right: 7vw; bottom: 14vh; width: 340px; padding: 16px 18px;
+    border: 1px solid rgba(255,255,255,.08); border-radius: 10px; backdrop-filter: blur(14px);
+    background: rgba(10,10,15,.4); }
+  .telem .head { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--subtle); margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,.06); }
+  .telem .row { display: grid; grid-template-columns: 80px 1fr auto; gap: 12px; align-items: center; padding: 5px 0; font-family: var(--font-mono); font-size: 11px; }
+  .telem .row .k { color: var(--subtle); text-transform: uppercase; letter-spacing: 0.16em; font-size: 9.5px; }
+  .telem .row .bar { height: 4px; background: rgba(255,255,255,.06); border-radius: 2px; overflow: hidden; }
+  .telem .row .bar i { display: block; height: 100%; background: var(--accent); width: 0; transition: width 1.2s var(--ease-out); }
+  .telem .row .v { color: var(--text); }
+
+  /* ── PANEL 6: closing ── */
+  .p6 { left: 50%; top: 50%; transform: translate(-50%, -50%) translateY(12px); text-align: center; max-width: 720px; }
+  .p6.on { transform: translate(-50%, -50%); }
+  .p6 .eyebrow { display: inline-block; margin-bottom: 24px; }
+  .p6 h2 { font-size: clamp(44px, 6vw, 88px); margin-bottom: 28px; }
+  .p6 h2 em { color: var(--accent); font-style: normal; }
+  .p6 .ctas { display: flex; gap: 12px; justify-content: center; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 22px; font-size: 14px; font-weight: 500; border-radius: 999px; text-decoration: none; transition: all .2s; font-family: var(--font-body); cursor: pointer; border: none; }
+  .btn.primary { background: var(--accent); color: #fff; box-shadow: 0 1px 0 rgba(255,255,255,.18) inset, 0 8px 24px -8px rgba(255,90,31,.5); }
+  .btn.primary:hover { background: var(--accent-soft); transform: translateY(-1px); }
+  .btn.ghost { background: transparent; color: var(--text); border: 1px solid rgba(255,255,255,.18); }
+  .btn.ghost:hover { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.32); }
+
+  /* hint */
+  .scroll-hint { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 60;
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--subtle); display: flex; flex-direction: column; align-items: center; gap: 8px;
+    opacity: 0; transition: opacity .4s; pointer-events: none; }
+  .scroll-hint.show { opacity: 1; }
+  .scroll-hint .ln { width: 1px; height: 28px; background: linear-gradient(to bottom, transparent, var(--accent)); animation: drop 1.6s infinite; }
+  @keyframes drop { 0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom} }
+
+  @media (max-width: 720px) {
+    .rail, .agent-readout, .telem, .p0 .legend { display: none; }
+    .p0, .p1, .pa { left: 5vw; right: 5vw; max-width: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sysbar">
+  <span class="live">SYS · AI2B / SCROLL_EXPERIENCE</span>
+  <span class="sep">│</span>
+  <span>BCN · UTC+01</span>
+  <span class="sep">│</span>
+  <span>RENDERER WEBGL2 · 60FPS</span>
+  <span class="scroll-pct" id="pct">0.00%</span>
+</div>
+
+<div class="marks"><span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span></div>
+
+<div id="stage"><canvas id="gl"></canvas></div>
+
+<nav class="rail" id="rail">
+  <a class="tick active" data-act="0"><span>§00 · INDEX</span><span class="bar"></span></a>
+  <a class="tick" data-act="1"><span>§01 · SWARM</span><span class="bar"></span></a>
+  <a class="tick" data-act="2"><span>§02 · SALES</span><span class="bar"></span></a>
+  <a class="tick" data-act="3"><span>§03 · SUPPORT</span><span class="bar"></span></a>
+  <a class="tick" data-act="4"><span>§04 · OPS</span><span class="bar"></span></a>
+  <a class="tick" data-act="5"><span>§05 · RESEARCH</span><span class="bar"></span></a>
+  <a class="tick" data-act="6"><span>§06 · DEPLOY</span><span class="bar"></span></a>
+</nav>
+
+<div class="hud" id="hud">
+  <!-- §00 -->
+  <div class="panel p0 on" data-panel="0">
+    <div class="eyebrow"><span class="ln"></span><span>§00 / INDEX · 2026.04</span></div>
+    <h1 class="h-display">
+      Custom AI<br>
+      <span class="muted">agents,</span> <span class="accent">forged</span><br>
+      to your stack.
+    </h1>
+    <div class="legend">
+      <div class="mono-row k">SCROLL TO BEGIN</div>
+      <div class="mono-row" style="color:var(--subtle);margin-top:6px">06 ACTS · ~30 SEC</div>
+    </div>
+  </div>
+
+  <!-- §01 swarm -->
+  <div class="panel p1" data-panel="1">
+    <div class="eyebrow">§01 / THE SWARM</div>
+    <h2 class="h-display">Unlimited agents.<br>One brain.</h2>
+    <p class="copy">Each node is a purpose-built agent. Run one — or a hundred. Local LLMs, your servers, your data. Hardware is the only ceiling.</p>
+  </div>
+  <div class="agent-readout panel" data-panel="1">
+    <div class="row"><span class="k">Active nodes</span><span class="v"><span class="pulse">●</span> 142 / ∞</span></div>
+    <div class="row"><span class="k">Topology</span><span class="v">mesh · async</span></div>
+    <div class="row"><span class="k">Inference</span><span class="v">on-prem · GPU</span></div>
+    <div class="row"><span class="k">Egress</span><span class="v">0 bytes</span></div>
+    <div class="row"><span class="k">Uptime</span><span class="v">99.98%</span></div>
+    <div class="row"><span class="k">Latency</span><span class="v">42ms p95</span></div>
+  </div>
+
+  <!-- §02 sales -->
+  <div class="panel pa" data-panel="2">
+    <div class="agent-tag" style="color:#FF5A1F"><span class="dot" style="background:#FF5A1F"></span>NODE_01 · SALES_AGENT</div>
+    <h3>Reads the<br>pipeline.<br>Writes the<br>follow-ups.</h3>
+    <p class="lede">Qualifies inbound in under a second. Drafts in your voice. Updates the CRM without a human lifting a finger.</p>
+    <ul><li>1,200 leads / month — silently</li><li>2-way HubSpot · Salesforce sync</li><li>Booked the demo before you woke up</li></ul>
+  </div>
+  <div class="telem panel" data-panel="2">
+    <div class="head"><span>SALES_AGENT.LIVE</span><span style="color:#FF5A1F">● ONLINE</span></div>
+    <div class="row"><span class="k">Leads / min</span><div class="bar"><i style="--w:78%;background:#FF5A1F"></i></div><span class="v">14.2</span></div>
+    <div class="row"><span class="k">Conv. rate</span><div class="bar"><i style="--w:62%;background:#FF5A1F"></i></div><span class="v">31.4%</span></div>
+    <div class="row"><span class="k">Reply time</span><div class="bar"><i style="--w:92%;background:#FF5A1F"></i></div><span class="v">0.4s</span></div>
+    <div class="row"><span class="k">Pipeline</span><div class="bar"><i style="--w:54%;background:#FF5A1F"></i></div><span class="v">€2.1M</span></div>
+  </div>
+
+  <!-- §03 support -->
+  <div class="panel pa" data-panel="3">
+    <div class="agent-tag" style="color:#E85D75"><span class="dot" style="background:#E85D75"></span>NODE_02 · SUPPORT_AGENT</div>
+    <h3>Triages,<br>resolves,<br>escalates —<br>24/7.</h3>
+    <p class="lede">Classifies tickets by intent and urgency. Answers from your docs with citations. Escalates the 3% that need a human.</p>
+    <ul><li>142 tickets / day · 97% closed</li><li>Cites source page · paragraph</li><li>Trained on your last 5 years</li></ul>
+  </div>
+  <div class="telem panel" data-panel="3">
+    <div class="head"><span>SUPPORT_AGENT.LIVE</span><span style="color:#E85D75">● ONLINE</span></div>
+    <div class="row"><span class="k">Tickets / day</span><div class="bar"><i style="--w:84%;background:#E85D75"></i></div><span class="v">142</span></div>
+    <div class="row"><span class="k">Resolved</span><div class="bar"><i style="--w:97%;background:#E85D75"></i></div><span class="v">97%</span></div>
+    <div class="row"><span class="k">CSAT</span><div class="bar"><i style="--w:88%;background:#E85D75"></i></div><span class="v">4.6 / 5</span></div>
+    <div class="row"><span class="k">Escalations</span><div class="bar"><i style="--w:18%;background:#E85D75"></i></div><span class="v">3%</span></div>
+  </div>
+
+  <!-- §04 ops -->
+  <div class="panel pa" data-panel="4">
+    <div class="agent-tag" style="color:#FFB84D"><span class="dot" style="background:#FFB84D"></span>NODE_03 · OPS_AGENT</div>
+    <h3>Schedules,<br>stocks,<br>rebalances<br>overnight.</h3>
+    <p class="lede">Re-balances the rota when a shift drops. Reorders from demand signals. Flags anomalies before they become fires.</p>
+    <ul><li>Runs at 03:00 · cron · on-prem</li><li>POS + sensors + rota + inventory</li><li>No cloud · no leaks · no drift</li></ul>
+  </div>
+  <div class="telem panel" data-panel="4">
+    <div class="head"><span>OPS_AGENT.LIVE</span><span style="color:#FFB84D">● ONLINE</span></div>
+    <div class="row"><span class="k">Rota gaps</span><div class="bar"><i style="--w:8%;background:#FFB84D"></i></div><span class="v">0 / 24</span></div>
+    <div class="row"><span class="k">Reorders</span><div class="bar"><i style="--w:46%;background:#FFB84D"></i></div><span class="v">7 today</span></div>
+    <div class="row"><span class="k">Anomalies</span><div class="bar"><i style="--w:22%;background:#FFB84D"></i></div><span class="v">2 flagged</span></div>
+    <div class="row"><span class="k">Cycle time</span><div class="bar"><i style="--w:72%;background:#FFB84D"></i></div><span class="v">3m 14s</span></div>
+  </div>
+
+  <!-- §05 research -->
+  <div class="panel pa" data-panel="5">
+    <div class="agent-tag" style="color:#6EA8FE"><span class="dot" style="background:#6EA8FE"></span>NODE_04 · RESEARCH_AGENT</div>
+    <h3>Reads<br>everything<br>you don't have<br>time for.</h3>
+    <p class="lede">Digests contracts, papers, and reports. Extracts what matters, cites the source. Turns 40 pages into 5 lines.</p>
+    <ul><li>47 docs · 182 citations / day</li><li>PDFs · email · web · drive</li><li>One agent · one GPU · one coffee</li></ul>
+  </div>
+  <div class="telem panel" data-panel="5">
+    <div class="head"><span>RESEARCH_AGENT.LIVE</span><span style="color:#6EA8FE">● SCANNING</span></div>
+    <div class="row"><span class="k">Docs / day</span><div class="bar"><i style="--w:64%;background:#6EA8FE"></i></div><span class="v">47</span></div>
+    <div class="row"><span class="k">Citations</span><div class="bar"><i style="--w:82%;background:#6EA8FE"></i></div><span class="v">182</span></div>
+    <div class="row"><span class="k">Compression</span><div class="bar"><i style="--w:91%;background:#6EA8FE"></i></div><span class="v">8:1</span></div>
+    <div class="row"><span class="k">Hallucination</span><div class="bar"><i style="--w:4%;background:#6EA8FE"></i></div><span class="v">&lt; 0.4%</span></div>
+  </div>
+
+  <!-- §06 deploy -->
+  <div class="panel p6" data-panel="6">
+    <div class="eyebrow">§06 / DEPLOY</div>
+    <h2 class="h-display">2 weeks to prototype.<br><em>4–6 to production.</em></h2>
+    <p class="copy" style="margin: 0 auto 36px; text-align:center">Working software on your stack. Full code handover. No vendor lock-in. Ever.</p>
+    <div class="ctas">
+      <a class="btn primary" href="#">Book a call <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg></a>
+      <a class="btn ghost" href="#">hello@ai2b.io</a>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-hint show" id="hint">
+  <span>Scroll</span>
+  <span class="ln"></span>
+</div>
+
+<div class="scroller">
+  <div class="act"></div>
+  <div class="act"></div>
+  <div class="act"></div>
+  <div class="act"></div>
+  <div class="act"></div>
+  <div class="act"></div>
+  <div class="act"></div>
+</div>
+
+<div class="grain"></div>
+
+<script>
+/* ============================================================
+   3D scroll-driven scene · custom WebGL2 fragment shader
+   - Volumetric ray-marched cluster of orbiting agent nodes
+   - Camera orbit + zoom + per-act focus driven by scroll
+   - 4 colored agent cores with pulsing glow
+   ============================================================ */
+
+const canvas = document.getElementById('gl');
+const gl = canvas.getContext('webgl2', { antialias: false, alpha: true, premultipliedAlpha: true });
+
+if (!gl) {
+  document.getElementById('stage').innerHTML = '<div style="position:absolute;inset:0;display:grid;place-items:center;color:#888;font-family:monospace">WebGL2 required</div>';
+} else {
+
+const VERT = `#version 300 es
+in vec2 a_pos;
+out vec2 v_uv;
+void main(){
+  v_uv = a_pos * 0.5 + 0.5;
+  gl_Position = vec4(a_pos, 0.0, 1.0);
+}`;
+
+// ray-marched scene of 4 spheres + connection filaments
+// scroll drives: cameraDist, cameraYaw, focusIndex (-1=all, 0..3=agent), focusAmount
+const FRAG = `#version 300 es
+precision highp float;
+in vec2 v_uv;
+out vec4 outColor;
+
+uniform vec2  u_res;
+uniform float u_time;
+uniform float u_scroll;     // 0..1 overall
+uniform float u_focusIndex; // -1, 0..3
+uniform float u_focusAmt;   // 0..1
+uniform float u_orbit;      // act 1: 0..1 fan-out
+uniform float u_intro;      // act 0: 0..1
+uniform float u_outro;      // act 6: 0..1
+
+#define SALES   vec3(1.00, 0.353, 0.122)
+#define SUPPORT vec3(0.910, 0.365, 0.459)
+#define OPS     vec3(1.00, 0.722, 0.302)
+#define RESEARCH vec3(0.431, 0.659, 0.996)
+
+mat2 rot(float a){ float c=cos(a), s=sin(a); return mat2(c,-s,s,c); }
+
+// hash + noise
+float hash(vec3 p){ p = fract(p*0.3183099 + .1); p *= 17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
+float noise(vec3 x){
+  vec3 i=floor(x), f=fract(x); f=f*f*(3.0-2.0*f);
+  return mix(mix(mix(hash(i+vec3(0,0,0)),hash(i+vec3(1,0,0)),f.x),
+                 mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),
+             mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),
+                 mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y), f.z);
+}
+float fbm(vec3 p){
+  float v=0.0, a=0.5;
+  for(int i=0;i<5;i++){ v+=a*noise(p); p*=2.07; a*=0.5; }
+  return v;
+}
+
+// SDF helpers
+float sdSphere(vec3 p, float r){ return length(p)-r; }
+float sdCapsule(vec3 p, vec3 a, vec3 b, float r){
+  vec3 pa=p-a, ba=b-a;
+  float h=clamp(dot(pa,ba)/dot(ba,ba),0.0,1.0);
+  return length(pa-ba*h)-r;
+}
+float smin(float a, float b, float k){
+  float h=clamp(0.5+0.5*(b-a)/k,0.0,1.0);
+  return mix(b,a,h)-k*h*(1.0-h);
+}
+
+// agent core positions on a tetrahedron-ish layout, fanned by orbit
+vec3 agentPos(int i){
+  // base ring
+  float a = float(i)*1.5707963 + u_time*0.06;
+  float r = mix(0.45, 1.6, u_orbit);
+  vec3 p;
+  if(i==0) p = vec3(cos(a)*r, sin(u_time*0.4)*0.2*u_orbit, sin(a)*r);
+  else if(i==1) p = vec3(cos(a+1.2)*r*0.9, 0.55*u_orbit + sin(u_time*0.3+1.0)*0.15, sin(a+1.2)*r*0.9);
+  else if(i==2) p = vec3(cos(a+2.4)*r*1.05, -0.55*u_orbit + cos(u_time*0.35+2.0)*0.15, sin(a+2.4)*r*1.05);
+  else p = vec3(cos(a+3.6)*r*0.85, sin(u_time*0.45+3.0)*0.2*u_orbit, sin(a+3.6)*r*0.85);
+
+  // when focused on this index, zoom into it
+  float fi = u_focusIndex;
+  if(abs(fi - float(i)) < 0.5){
+    p = mix(p, vec3(0.0, 0.0, 0.0), u_focusAmt*0.85);
+  } else if(fi >= 0.0){
+    // push others outward + fade
+    p = mix(p, p*2.4, u_focusAmt);
+  }
+  return p;
+}
+
+float agentRadius(int i){
+  float base = 0.34;
+  if(abs(u_focusIndex - float(i)) < 0.5){
+    return mix(base, 0.62, u_focusAmt);
+  }
+  if(u_focusIndex >= 0.0){
+    return mix(base, 0.18, u_focusAmt);
+  }
+  return base;
+}
+
+vec3 agentColor(int i){
+  if(i==0) return SALES;
+  if(i==1) return SUPPORT;
+  if(i==2) return OPS;
+  return RESEARCH;
+}
+
+// scene SDF returns dist + glow accumulator (in .x)
+// .y holds material id
+vec2 map(vec3 p, out vec3 emitColor){
+  emitColor = vec3(0.0);
+  float d = 1e9;
+  for(int i=0;i<4;i++){
+    vec3 ap = agentPos(i);
+    float dr = sdSphere(p-ap, agentRadius(i));
+    // pulsing
+    float pulse = 0.04 * sin(u_time*1.5 + float(i)*1.1);
+    dr -= pulse;
+    float k = 0.45;
+    d = smin(d, dr, k);
+    // emission falls with distance from this core
+    float e = exp(-length(p-ap)*1.6);
+    emitColor += agentColor(i) * e;
+  }
+  // central seed (the brain) — visible in §00 and §06
+  float seed = sdSphere(p, 0.18 + 0.02*sin(u_time*2.0));
+  float seedBlend = smoothstep(0.0, 1.0, max(u_intro, u_outro));
+  d = smin(d, seed, mix(0.05, 0.4, seedBlend));
+  emitColor += vec3(1.0,0.55,0.3) * exp(-length(p)*2.2) * (0.5 + seedBlend*0.6);
+  return vec2(d, 0.0);
+}
+
+vec3 calcNormal(vec3 p){
+  const vec2 e = vec2(0.001, 0.0);
+  vec3 dummy;
+  return normalize(vec3(
+    map(p+e.xyy, dummy).x - map(p-e.xyy, dummy).x,
+    map(p+e.yxy, dummy).x - map(p-e.yxy, dummy).x,
+    map(p+e.yyx, dummy).x - map(p-e.yyx, dummy).x
+  ));
+}
+
+void main(){
+  vec2 uv = (gl_FragCoord.xy - 0.5*u_res) / u_res.y;
+
+  // camera setup
+  // distance: pulled close at intro/outro, mid during scroll
+  float camDist = mix(2.5, 4.2, u_orbit) - u_focusAmt*1.4 + (1.0-u_intro)*0.0;
+  camDist = mix(2.0, camDist, u_intro);
+  camDist = mix(camDist, 2.2, u_outro);
+  // yaw: full rotation across scroll
+  float yaw = u_scroll * 6.2831853 * 0.6 + u_time*0.04;
+  float pitch = sin(u_scroll*3.14159 + 0.5)*0.25 - 0.1;
+
+  vec3 ro = vec3(sin(yaw)*camDist, sin(pitch)*camDist*0.45, cos(yaw)*camDist);
+  vec3 ta = vec3(0.0);
+  vec3 fwd = normalize(ta - ro);
+  vec3 right = normalize(cross(fwd, vec3(0,1,0)));
+  vec3 up = cross(right, fwd);
+  float fov = 1.4;
+  vec3 rd = normalize(fwd + uv.x*right*fov + uv.y*up*fov);
+
+  // raymarch
+  float t = 0.0;
+  vec3 emit = vec3(0.0);
+  vec3 emitTotal = vec3(0.0);
+  float hit = 0.0;
+  vec3 hitP = vec3(0.0);
+  for(int i=0;i<88;i++){
+    vec3 p = ro + rd*t;
+    vec3 e;
+    float d = map(p, e).x;
+    emitTotal += e * 0.012;
+    if(d < 0.001){ hit = 1.0; hitP = p; break; }
+    if(t > 16.0) break;
+    t += d * 0.85;
+  }
+
+  vec3 col = vec3(0.0);
+
+  if(hit > 0.5){
+    vec3 n = calcNormal(hitP);
+    vec3 e;
+    map(hitP, e);
+    // surface = soft directional shading + emission + fresnel
+    vec3 lightDir = normalize(vec3(0.6, 0.8, 0.4));
+    float diff = max(dot(n, lightDir), 0.0);
+    float fres = pow(1.0 - max(dot(n, -rd), 0.0), 2.5);
+    vec3 base = e * 1.4 + vec3(0.04,0.04,0.06);
+    col = base * (0.4 + diff*0.6) + e * fres * 1.8;
+    // rim
+    col += e * 0.6 * pow(1.0 - max(dot(n,-rd),0.0), 4.0);
+  } else {
+    // background — atmospheric volumetric noise
+    float bg = fbm(rd*1.2 + vec3(u_time*0.05, 0.0, u_time*0.03));
+    col = vec3(0.02,0.02,0.04) + bg*0.04;
+    // a deep horizon glow
+    float horiz = 1.0 - abs(rd.y);
+    col += vec3(1.0,0.4,0.15) * pow(horiz, 8.0) * 0.18;
+  }
+
+  // accumulate volumetric emission (filaments)
+  col += emitTotal * 1.6;
+
+  // chromatic separation on edges
+  float vig = smoothstep(1.4, 0.3, length(uv));
+  col *= vig;
+
+  // grain
+  float g = (hash(vec3(gl_FragCoord.xy, fract(u_time))) - 0.5) * 0.025;
+  col += g;
+
+  // soft tonemap
+  col = col / (col + vec3(1.0));
+  col = pow(col, vec3(0.85));
+
+  // gentle outro fade-to-warm
+  col = mix(col, col * vec3(1.05, 0.95, 0.85) + vec3(0.04,0.02,0.0), u_outro*0.4);
+
+  outColor = vec4(col, 1.0);
+}`;
+
+function compile(type, src){
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src); gl.compileShader(s);
+  if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)){ console.error(gl.getShaderInfoLog(s)); }
+  return s;
+}
+const prog = gl.createProgram();
+gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
+gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
+gl.bindAttribLocation(prog, 0, 'a_pos');
+gl.linkProgram(prog);
+if(!gl.getProgramParameter(prog, gl.LINK_STATUS)){ console.error(gl.getProgramInfoLog(prog)); }
+
+const buf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+const vao = gl.createVertexArray();
+gl.bindVertexArray(vao);
+gl.enableVertexAttribArray(0);
+gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+const u = {
+  res: gl.getUniformLocation(prog, 'u_res'),
+  time: gl.getUniformLocation(prog, 'u_time'),
+  scroll: gl.getUniformLocation(prog, 'u_scroll'),
+  focusIndex: gl.getUniformLocation(prog, 'u_focusIndex'),
+  focusAmt: gl.getUniformLocation(prog, 'u_focusAmt'),
+  orbit: gl.getUniformLocation(prog, 'u_orbit'),
+  intro: gl.getUniformLocation(prog, 'u_intro'),
+  outro: gl.getUniformLocation(prog, 'u_outro'),
+};
+
+function resize(){
+  const dpr = Math.min(window.devicePixelRatio || 1, 1.75);
+  canvas.width = Math.floor(canvas.clientWidth * dpr);
+  canvas.height = Math.floor(canvas.clientHeight * dpr);
+  gl.viewport(0, 0, canvas.width, canvas.height);
+}
+window.addEventListener('resize', resize);
+resize();
+
+// scroll state
+const ACTS = 7; // 0..6
+let scroll = 0;
+let scrollTarget = 0;
+
+function updateScroll(){
+  const max = document.documentElement.scrollHeight - window.innerHeight;
+  scrollTarget = max > 0 ? window.scrollY / max : 0;
+}
+window.addEventListener('scroll', updateScroll, { passive: true });
+
+function activeAct(s){
+  // s in 0..1, divide into 7 segments
+  return Math.min(ACTS - 1, Math.floor(s * ACTS + 0.0001));
+}
+
+function smoothstep(a,b,x){ const t=Math.max(0,Math.min(1,(x-a)/(b-a))); return t*t*(3-2*t); }
+
+const panels = document.querySelectorAll('.panel');
+const ticks = document.querySelectorAll('.rail .tick');
+const pctEl = document.getElementById('pct');
+const hint = document.getElementById('hint');
+
+function setActiveAct(act){
+  panels.forEach(p => p.classList.toggle('on', +p.dataset.panel === act));
+  ticks.forEach((t,i) => t.classList.toggle('active', i === act));
+  // animate telemetry bars
+  const onPanel = document.querySelector(`.panel[data-panel="${act}"] .telem, .telem.panel.on`);
+  document.querySelectorAll(`.panel.on .telem .bar i, .panel.on.telem .bar i`).forEach(()=>{});
+  document.querySelectorAll('.telem.panel').forEach(t=>{
+    if(+t.dataset.panel === act){
+      t.querySelectorAll('.bar i').forEach(i=>{
+        const w = i.style.getPropertyValue('--w') || '50%';
+        i.style.width = w;
+      });
+    } else {
+      t.querySelectorAll('.bar i').forEach(i=>{ i.style.width = '0%'; });
+    }
+  });
+  // hint only on first act
+  hint.classList.toggle('show', act === 0);
+}
+
+ticks.forEach((t,i)=>{
+  t.addEventListener('click', ()=>{
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    window.scrollTo({ top: (i / (ACTS-1)) * max, behavior: 'smooth' });
+  });
+});
+
+let currentAct = -1;
+const t0 = performance.now();
+function frame(){
+  // smooth scroll lerp
+  scroll += (scrollTarget - scroll) * 0.08;
+  const time = (performance.now() - t0) / 1000;
+
+  // derive parameters
+  const act = activeAct(scroll);
+  if(act !== currentAct){ currentAct = act; setActiveAct(act); }
+
+  pctEl.textContent = (scroll*100).toFixed(2) + '%';
+
+  // intro: visible during act 0
+  const intro = 1 - smoothstep(0.02, 0.14, scroll);
+  // outro: visible during act 6
+  const outro = smoothstep(0.86, 0.99, scroll);
+
+  // orbit fan-out: peaks during act 1 (0.14..0.28)
+  const orbit = smoothstep(0.05, 0.20, scroll) * (1 - smoothstep(0.85, 0.99, scroll));
+
+  // focus: act 2..5 = agent 0..3
+  let focusIndex = -1, focusAmt = 0;
+  // act ranges
+  const segs = [
+    [0.00, 0.14],   // act0
+    [0.14, 0.28],   // act1 swarm
+    [0.28, 0.43],   // act2 sales
+    [0.43, 0.58],   // act3 support
+    [0.58, 0.72],   // act4 ops
+    [0.72, 0.86],   // act5 research
+    [0.86, 1.00],   // act6 deploy
+  ];
+  for(let i=2;i<=5;i++){
+    const [a,b] = segs[i];
+    if(scroll >= a && scroll <= b){
+      focusIndex = i - 2;
+      // focus amount easing in/out within segment
+      const local = (scroll - a) / (b - a);
+      focusAmt = Math.sin(Math.max(0,Math.min(1,local)) * Math.PI); // 0->1->0
+      // make it stay high more of the segment
+      focusAmt = Math.min(1, focusAmt * 1.6);
+      break;
+    }
+  }
+
+  gl.useProgram(prog);
+  gl.bindVertexArray(vao);
+  gl.uniform2f(u.res, canvas.width, canvas.height);
+  gl.uniform1f(u.time, time);
+  gl.uniform1f(u.scroll, scroll);
+  gl.uniform1f(u.focusIndex, focusIndex);
+  gl.uniform1f(u.focusAmt, focusAmt);
+  gl.uniform1f(u.orbit, orbit);
+  gl.uniform1f(u.intro, intro);
+  gl.uniform1f(u.outro, outro);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+  requestAnimationFrame(frame);
+}
+updateScroll();
+setActiveAct(0);
+requestAnimationFrame(frame);
+
+}
+</script>
+
+</body>
+</html>

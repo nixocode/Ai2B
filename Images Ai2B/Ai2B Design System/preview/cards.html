@@ -1,0 +1,25 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Cards</title><link rel="stylesheet" href="_card.css">
+<style>
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px}
+.card.hover{background:var(--surface2);border-color:var(--border-2)}
+.chip{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--accent-wash);border:1px solid rgba(255,90,31,.2);color:var(--accent);font-family:var(--font-mono);font-size:13px}
+</style></head>
+<body><div class="wrap grid-2">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
+      <span class="h4" style="color:var(--accent);font-size:32px;line-height:1">01</span>
+      <span class="chip">↗</span>
+    </div>
+    <h4 class="h4" style="font-size:17px;margin:0 0 4px">Diagnose</h4>
+    <p class="body-sm" style="margin:0">We map your workflows, bottlenecks and data.</p>
+  </div>
+  <div class="card hover">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
+      <span class="h4" style="color:var(--accent);font-size:32px;line-height:1">02</span>
+      <span class="chip">↗</span>
+    </div>
+    <h4 class="h4" style="font-size:17px;margin:0 0 4px">Build</h4>
+    <p class="body-sm" style="margin:0">Custom software on your stack.</p>
+    <p class="label-mono" style="font-size:10px;margin:10px 0 0;color:var(--subtle)">← hover state</p>
+  </div>
+</div></body></html>

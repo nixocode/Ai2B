@@ -1,0 +1,1171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ai2B — Custom AI agent systems · Barcelona</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;450;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;scroll-padding-top:96px}
+  body{background:var(--bg);color:var(--text);font-family:var(--font-body);letter-spacing:-0.011em;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  a{color:inherit;text-decoration:none}
+
+  /* global grain */
+  .grain{position:fixed;inset:0;background-image:url('../../assets/noise.svg');background-size:160px 160px;opacity:.025;pointer-events:none;z-index:9999;mix-blend-mode:overlay}
+
+  /* ═══════════════════════════════════════════════════════════
+     SYSTEM CHROME — top status bar
+     ═══════════════════════════════════════════════════════════ */
+  .sysbar{
+    position:fixed;top:0;left:0;right:0;z-index:55;
+    height:28px;display:flex;align-items:center;
+    padding:0 16px;gap:18px;
+    background:rgba(10,10,15,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--border);
+    font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--subtle);
+  }
+  .sysbar .sb-item{white-space:nowrap}
+  .sysbar .sb-sep{color:var(--border-2)}
+  .sysbar .sb-live{color:var(--accent);display:flex;align-items:center;gap:6px}
+  .sysbar .sb-live::before{content:"";width:5px;height:5px;border-radius:999px;background:var(--accent);box-shadow:0 0 8px var(--accent-glow);animation:blink 2s ease-in-out infinite}
+  @keyframes blink{50%{opacity:.35}}
+  .sysbar .sb-spacer{flex:1}
+
+  /* ═══════════════════════════════════════════════════════════
+     NAV — wordmark left, center links, CTA right
+     flat against sysbar, monospace caps
+     ═══════════════════════════════════════════════════════════ */
+  .nav{
+    position:fixed;top:28px;left:0;right:0;z-index:50;
+    height:56px;
+    background:rgba(10,10,15,.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--border);
+  }
+  .nav-inner{max-width:1280px;margin:0 auto;height:100%;padding:0 24px;display:flex;align-items:center;gap:24px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand-mark{width:20px;height:20px;border-radius:999px;position:relative;
+    background:radial-gradient(circle at 30% 30%,#ff8a55,var(--accent) 60%,#c73e0f 100%);
+    box-shadow:0 0 0 1px rgba(255,255,255,.1) inset,0 0 14px rgba(255,90,31,.45)}
+  .brand-mark::after{content:"";position:absolute;inset:0;margin:auto;width:4px;height:4px;border-radius:999px;background:var(--bg)}
+  .brand-wm{font-family:var(--font-display);font-size:15px;font-weight:500;letter-spacing:-0.022em}
+  .brand-coord{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--subtle);margin-left:6px;padding-left:10px;border-left:1px solid var(--border)}
+  .nav-links{margin-left:auto;display:none;gap:2px}
+  @media(min-width:900px){.nav-links{display:flex}}
+  .nav-link{
+    font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    padding:6px 10px;border-radius:6px;color:var(--muted);
+    transition:color 180ms var(--ease-out),background 180ms var(--ease-out);
+  }
+  .nav-link:hover{color:var(--text);background:rgba(255,255,255,.04)}
+  .nav-link .nn{color:var(--subtle);margin-right:6px}
+  .nav-cta{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:8px 12px 8px 14px;
+    font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:#fff;background:var(--accent);border-radius:8px;
+    box-shadow:0 1px 0 rgba(255,255,255,.18) inset,0 6px 16px -6px var(--accent-glow);
+    transition:background 180ms var(--ease-out),transform 180ms var(--ease-out);
+  }
+  .nav-cta:hover{background:var(--accent-soft);transform:translateY(-1px)}
+
+  /* ═══════════════════════════════════════════════════════════
+     LEFT RAIL — section index (sticky)
+     ═══════════════════════════════════════════════════════════ */
+  .rail{
+    position:fixed;top:50%;left:24px;transform:translateY(-50%);z-index:40;
+    display:none;flex-direction:column;gap:10px;
+    padding:14px 12px;border:1px solid var(--border);border-radius:12px;
+    background:rgba(10,10,15,.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  }
+  @media(min-width:1200px){.rail{display:flex}}
+  .rail a{
+    display:flex;align-items:center;gap:10px;
+    font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--subtle);padding:4px 2px;
+    transition:color 180ms var(--ease-out);
+  }
+  .rail a:hover{color:var(--text)}
+  .rail a .dot{width:6px;height:6px;border-radius:999px;background:var(--border-2);transition:background 180ms var(--ease-out)}
+  .rail a.is-active{color:var(--accent)}
+  .rail a.is-active .dot{background:var(--accent);box-shadow:0 0 8px var(--accent-glow)}
+  .rail a .sect-n{color:inherit;opacity:.55}
+
+  /* ═══════════════════════════════════════════════════════════
+     PAGE GRID
+     ═══════════════════════════════════════════════════════════ */
+  main{padding-top:84px}
+  .wrap{max-width:1280px;margin:0 auto;padding:0 24px}
+  @media(min-width:768px){.wrap{padding:0 40px}}
+
+  /* ═══════════════════════════════════════════════════════════
+     SECTION DIVIDER — §NN label + gradient rule
+     ═══════════════════════════════════════════════════════════ */
+  .sect-head{
+    display:grid;grid-template-columns:minmax(200px,auto) 1fr auto;align-items:center;gap:20px;
+    padding:96px 0 40px;
+  }
+  @media(max-width:767px){.sect-head{padding:72px 0 32px;grid-template-columns:1fr;gap:12px}}
+  .sect-id{
+    display:flex;align-items:center;gap:10px;
+    font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--muted);
+  }
+  .sect-id .n{color:var(--accent)}
+  .sect-id .glyph{color:var(--subtle)}
+  .sect-rule{
+    height:1px;
+    background:linear-gradient(90deg,var(--border-2),var(--border) 30%,var(--border) 70%,transparent);
+  }
+  .sect-meta{
+    font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--subtle);text-align:right;
+  }
+  @media(max-width:767px){.sect-rule{display:none}.sect-meta{text-align:left}}
+
+  /* ═══════════════════════════════════════════════════════════
+     HERO — asymmetric 12-col
+     ═══════════════════════════════════════════════════════════ */
+  .hero{position:relative;min-height:calc(100vh - 84px);display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:80px;overflow:hidden}
+  .hero-bg{position:absolute;inset:0;z-index:-2;pointer-events:none;
+    background:
+      radial-gradient(58% 60% at 68% 38%,rgba(255,90,31,.26),transparent 65%),
+      radial-gradient(50% 50% at 22% 72%,rgba(36,22,70,.55),transparent 70%),
+      radial-gradient(72% 70% at 82% 80%,rgba(255,122,63,.10),transparent 75%),
+      var(--bg);}
+  .hero-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,15,.15) 0%,rgba(10,10,15,.50) 60%,var(--bg) 100%)}
+  .hero-dots{position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:.06;
+    background-image:radial-gradient(rgba(245,245,247,.7) 1px,transparent 1px);
+    background-size:28px 28px;
+    -webkit-mask-image:radial-gradient(ellipse 70% 55% at 55% 45%,black 30%,transparent 85%);
+    mask-image:radial-gradient(ellipse 70% 55% at 55% 45%,black 30%,transparent 85%);}
+
+  /* hero registration marks */
+  .regmark{position:absolute;width:20px;height:20px;pointer-events:none;color:var(--border-2)}
+  .regmark::before,.regmark::after{content:"";position:absolute;background:currentColor}
+  .regmark::before{top:9px;left:0;right:0;height:1px}
+  .regmark::after{top:0;bottom:0;left:9px;width:1px}
+  .regmark.tl{top:96px;left:24px}
+  .regmark.tr{top:96px;right:24px}
+  .regmark.bl{bottom:24px;left:24px}
+  .regmark.br{bottom:24px;right:24px}
+
+  .hero-grid{display:grid;grid-template-columns:1fr;gap:48px;align-items:end}
+  @media(min-width:960px){.hero-grid{grid-template-columns:7fr 5fr;gap:64px}}
+
+  .hero-badge{
+    display:inline-flex;align-items:center;gap:10px;
+    padding:5px 12px 5px 10px;border-radius:999px;
+    background:rgba(17,17,23,.55);border:1px solid var(--border);backdrop-filter:blur(12px);
+    font-family:var(--font-mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--text);
+    margin-bottom:28px;
+  }
+  .hero-badge .pulse{position:relative;width:7px;height:7px;border-radius:999px;background:var(--accent)}
+  .hero-badge .pulse::after{content:"";position:absolute;inset:-4px;border-radius:999px;border:1px solid var(--accent);opacity:.5;animation:ring 2.2s ease-out infinite}
+  @keyframes ring{0%{transform:scale(.6);opacity:.8}80%{transform:scale(1.6);opacity:0}100%{opacity:0}}
+
+  .h1{
+    font-family:var(--font-display);font-weight:600;
+    font-size:clamp(2.5rem,7vw,5.5rem);line-height:1.02;letter-spacing:-0.04em;
+  }
+  .h1 .muted{color:var(--muted)}
+  .h1 .accent{color:var(--accent)}
+  .h1 .caret{display:inline-block;width:.08em;height:.86em;background:var(--accent);margin-left:.04em;transform:translateY(.04em);animation:caret 1.1s steps(2) infinite}
+  @keyframes caret{50%{opacity:0}}
+
+  .lede{font-size:clamp(1rem,1.4vw,1.125rem);margin-top:24px;max-width:34rem;line-height:1.55;color:rgba(245,245,247,.78)}
+  .lede strong{color:var(--text);font-weight:500}
+
+  .cta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:32px;align-items:center}
+  .btn-primary,.btn-ghost{
+    display:inline-flex;align-items:center;gap:8px;
+    font-weight:500;padding:11px 18px;border-radius:10px;
+    font-size:14px;font-family:inherit;cursor:pointer;border:none;
+    transition:all 200ms var(--ease-out);letter-spacing:-0.005em;
+  }
+  .btn-primary{background:var(--accent);color:#fff;
+    box-shadow:0 1px 0 rgba(255,255,255,.15) inset,0 6px 18px -6px var(--accent-glow)}
+  .btn-primary:hover{background:var(--accent-soft);transform:translateY(-1px)}
+  .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border-2)}
+  .btn-ghost:hover{border-color:var(--text);background:rgba(255,255,255,.04)}
+  .kbd{
+    display:inline-flex;align-items:center;gap:6px;
+    font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--subtle);
+    margin-left:4px;
+  }
+  .kbd .k{padding:2px 6px;border:1px solid var(--border);border-radius:4px;color:var(--muted);background:rgba(255,255,255,.02)}
+
+  /* Right-column: system readout */
+  .readout{
+    border:1px solid var(--border);border-radius:14px;overflow:hidden;
+    background:linear-gradient(180deg,rgba(255,255,255,.02),transparent 60%),var(--surface);
+    box-shadow:0 20px 60px -30px rgba(0,0,0,.7);
+  }
+  .readout::before{content:"";display:block;height:1px;background:linear-gradient(90deg,transparent,rgba(255,90,31,.5),transparent)}
+  .readout-head{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border)}
+  .readout-head .dot{width:7px;height:7px;border-radius:999px;background:var(--accent);box-shadow:0 0 8px var(--accent-glow)}
+  .readout-head .ttl{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .readout-head .trail{margin-left:auto;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--subtle)}
+  .readout-body{padding:12px 14px;display:flex;flex-direction:column;gap:0}
+  .ro-row{display:grid;grid-template-columns:120px 1fr auto;gap:12px;align-items:center;padding:9px 0;border-bottom:1px dashed var(--border)}
+  .ro-row:last-child{border-bottom:none}
+  .ro-row .k{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--subtle)}
+  .ro-row .bar{position:relative;height:6px;border-radius:999px;background:var(--border);overflow:hidden}
+  .ro-row .bar::after{content:"";position:absolute;inset:0;width:var(--pct,50%);background:var(--accent);box-shadow:0 0 12px var(--accent-glow)}
+  .ro-row .v{font-family:var(--font-mono);font-size:11.5px;color:var(--text);letter-spacing:.02em;white-space:nowrap}
+  .ro-row .v .u{color:var(--subtle);margin-left:4px}
+  .readout-foot{display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--border);background:rgba(255,255,255,.015)}
+  .readout-foot .lbl{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--subtle)}
+  .readout-foot .log{font-family:var(--font-mono);font-size:10.5px;color:var(--muted);margin-left:auto}
+  .readout-foot .log .ok{color:var(--accent)}
+
+  /* Hero bottom meta row */
+  .hero-meta{display:flex;gap:48px;flex-wrap:wrap;margin-top:56px;padding-top:24px;border-top:1px solid var(--border)}
+  .hero-meta .mcol{display:flex;flex-direction:column;gap:6px}
+  .hero-meta .mk{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--subtle)}
+  .hero-meta .mv{font-family:var(--font-display);font-weight:500;font-size:clamp(1.4rem,2.2vw,1.75rem);line-height:1.1;letter-spacing:-0.022em}
+
+  /* ═══════════════════════════════════════════════════════════
+     AGENTS (§01)
+     ═══════════════════════════════════════════════════════════ */
+  .agents-stack{display:flex;flex-direction:column;gap:16px}
+  .agent-card{
+    position:relative;display:grid;grid-template-columns:1fr;gap:32px;
+    padding:28px 24px;
+    border:1px solid var(--border);border-radius:18px;
+    background:var(--surface);overflow:hidden;
+  }
+  @media(min-width:1000px){.agent-card{grid-template-columns:6fr 6fr;gap:56px;padding:36px 36px}}
+  .agent-card::before{content:"";position:absolute;top:0;left:0;right:0;height:1px}
+  .agent-card[data-agent="sales"]::before   {background:linear-gradient(90deg,transparent,#FF5A1F,transparent)}
+  .agent-card[data-agent="support"]::before {background:linear-gradient(90deg,transparent,#E85D75,transparent)}
+  .agent-card[data-agent="ops"]::before     {background:linear-gradient(90deg,transparent,#FFB84D,transparent)}
+  .agent-card[data-agent="research"]::before{background:linear-gradient(90deg,transparent,#6EA8FE,transparent)}
+  .agent-card[data-agent="sales"]   {--ac:#FF5A1F}
+  .agent-card[data-agent="support"] {--ac:#E85D75}
+  .agent-card[data-agent="ops"]     {--ac:#FFB84D}
+  .agent-card[data-agent="research"]{--ac:#6EA8FE}
+
+  .agent-halo{position:absolute;top:-40%;right:-30%;width:90%;aspect-ratio:1;z-index:0;pointer-events:none;filter:blur(80px);
+    background:radial-gradient(circle,color-mix(in oklab,var(--ac) 22%,transparent),transparent 65%)}
+  .agent-card>*{position:relative;z-index:1}
+
+  .agent-head{display:flex;align-items:baseline;gap:14px;margin-bottom:18px}
+  .agent-head .num{font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ac)}
+  .agent-head .slash{color:var(--border-2);font-family:var(--font-mono)}
+  .agent-head .name{font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+  .agent-name{font-family:var(--font-display);font-weight:600;font-size:clamp(1.75rem,3.5vw,2.5rem);line-height:1.05;letter-spacing:-0.035em}
+  .agent-name .em{color:var(--ac)}
+  .agent-role{font-size:1.0625rem;color:rgba(245,245,247,.82);max-width:32rem;margin-top:14px;line-height:1.5}
+  .agent-caps{list-style:none;display:flex;flex-direction:column;gap:8px;margin-top:20px}
+  .agent-caps li{display:flex;gap:12px;font-size:14.5px;color:rgba(245,245,247,.88)}
+  .agent-caps .dot{flex-shrink:0;width:5px;height:5px;border-radius:999px;background:var(--ac);margin-top:9px}
+
+  /* spec table — mono columnar data, not chips */
+  .spec{margin-top:24px;border-top:1px solid var(--border);padding-top:16px}
+  .spec-row{display:grid;grid-template-columns:72px 1fr;gap:16px;padding:7px 0;align-items:baseline;border-bottom:1px dashed var(--border)}
+  .spec-row:last-child{border-bottom:none}
+  .spec-row .k{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ac)}
+  .spec-row .v{font-family:var(--font-mono);font-size:12px;color:var(--muted);letter-spacing:.02em;line-height:1.5}
+  .spec-row .v b{color:var(--text);font-weight:500}
+
+  /* AgentFrame chrome */
+  .frame{
+    position:relative;aspect-ratio:1/1;width:100%;max-width:480px;margin:0 auto;
+    border-radius:14px;overflow:hidden;
+    background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,0) 60%),var(--surface2);
+    border:1px solid var(--border);
+    box-shadow:0 20px 60px -30px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.02) inset;
+  }
+  .frame::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--ac),transparent);opacity:.7}
+  .fr-head{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)}
+  .fr-head .ind{width:7px;height:7px;border-radius:999px;background:var(--ac);box-shadow:0 0 10px var(--ac)}
+  .fr-head .fn{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;color:var(--muted)}
+  .fr-head .fn .ext{color:var(--subtle)}
+  .fr-head .t{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;color:var(--subtle)}
+  .fr-body{padding:14px;height:calc(100% - 39px);display:flex;flex-direction:column;gap:10px}
+
+  /* Chat (sales) */
+  .chat{flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:7px}
+  .bub{max-width:86%;border-radius:14px;padding:7px 12px;font-size:12.5px;line-height:1.4}
+  .bub .w{font-family:var(--font-mono);font-size:9px;display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:.14em}
+  .bub.lead{align-self:flex-start;background:rgba(255,255,255,.035);border:1px solid var(--border)}
+  .bub.lead .w{color:var(--subtle)}
+  .bub.bot{align-self:flex-end;background:color-mix(in oklab,var(--ac) 18%,transparent);border:1px solid color-mix(in oklab,var(--ac) 40%,transparent)}
+  .bub.bot .w{color:var(--ac)}
+
+  .minpipe{border-radius:10px;padding:10px;background:rgba(10,10,15,.5);border:1px solid var(--border)}
+  .minpipe-head{display:flex;justify-content:space-between;margin-bottom:8px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase}
+  .minpipe-head .k{color:var(--muted)}
+  .minpipe-head .v{color:var(--ac)}
+  .minpipe-stages{display:flex;gap:5px}
+  .minpipe-stages .s{flex:1;display:flex;flex-direction:column;gap:4px}
+  .minpipe-stages .bar{height:5px;border-radius:999px;background:var(--border-2)}
+  .minpipe-stages .s.on .bar{background:var(--ac)}
+  .minpipe-stages .lab{font-family:var(--font-mono);font-size:9px;color:var(--subtle);letter-spacing:.06em;text-transform:uppercase}
+  .minpipe-stages .s.on .lab{color:var(--text)}
+
+  /* Queue (support) */
+  .queue{display:flex;flex-direction:column;gap:6px;flex:1}
+  .tck{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:9px 11px;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid var(--border);font-size:12px}
+  .tck .n{font-family:var(--font-mono);color:var(--subtle);font-size:10px;letter-spacing:.12em}
+  .tck .tag{font-family:var(--font-mono);font-size:9px;padding:2px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:.14em}
+
+  /* Rota (ops) */
+  .rota{display:grid;grid-template-columns:auto repeat(5,1fr);gap:3px;font-size:10px;flex:1}
+  .rota .hd{font-family:var(--font-mono);color:var(--subtle);text-transform:uppercase;letter-spacing:.12em;padding:3px}
+  .rota .c{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:5px;padding:6px 2px;text-align:center;color:var(--muted)}
+  .rota .c.fill{background:color-mix(in oklab,var(--ac) 12%,transparent);border-color:color-mix(in oklab,var(--ac) 35%,transparent);color:var(--ac)}
+  .rota .c.auto{background:color-mix(in oklab,var(--ac) 22%,transparent);border-color:var(--ac);color:var(--ac);font-weight:600}
+
+  /* Docs (research) */
+  .docs{display:flex;flex-direction:column;gap:8px;flex:1}
+  .doc{padding:11px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:8px}
+  .doc .t{font-size:12px;font-weight:500;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .doc .bd{font-family:var(--font-mono);font-size:9px;padding:2px 7px;border-radius:4px;background:color-mix(in oklab,var(--ac) 14%,transparent);color:var(--ac);border:1px solid color-mix(in oklab,var(--ac) 34%,transparent);text-transform:uppercase;letter-spacing:.12em}
+  .doc .line{height:5px;background:var(--border);border-radius:999px;margin-top:4px}
+  .doc .line.s{width:70%}
+  .doc .line.ss{width:40%}
+  .doc .cite{font-family:var(--font-mono);font-size:9px;color:var(--ac);letter-spacing:.14em;margin-top:6px;text-transform:uppercase}
+
+  /* ═══════════════════════════════════════════════════════════
+     METHOD (§02) — three steps, asymmetric
+     ═══════════════════════════════════════════════════════════ */
+  .method{display:grid;grid-template-columns:1fr;gap:16px}
+  @media(min-width:900px){.method{grid-template-columns:repeat(3,1fr)}}
+  .mstep{
+    position:relative;padding:24px;
+    border:1px solid var(--border);border-radius:14px;background:var(--surface);
+    display:flex;flex-direction:column;gap:16px;
+    transition:border-color 240ms var(--ease-out),background 240ms var(--ease-out);
+  }
+  .mstep:hover{border-color:var(--border-2);background:var(--surface2)}
+  .mstep-n{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);display:flex;justify-content:space-between;align-items:center}
+  .mstep-n .wk{color:var(--subtle)}
+  .mstep-ttl{font-family:var(--font-display);font-weight:500;font-size:1.75rem;line-height:1.05;letter-spacing:-0.035em;margin-top:8px}
+  .mstep-desc{color:var(--muted);font-size:14.5px;line-height:1.55;margin-top:4px}
+  .mstep-deliv{margin-top:auto;padding-top:16px;border-top:1px dashed var(--border)}
+  .mstep-deliv .k{font-family:var(--font-mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--subtle);margin-bottom:6px}
+  .mstep-deliv ul{list-style:none;display:flex;flex-direction:column;gap:3px}
+  .mstep-deliv li{font-family:var(--font-mono);font-size:11.5px;color:var(--muted);letter-spacing:.02em}
+  .mstep-deliv li::before{content:"→ ";color:var(--accent);margin-right:2px}
+
+  /* ═══════════════════════════════════════════════════════════
+     HARDWARE (§03) — schematic
+     ═══════════════════════════════════════════════════════════ */
+  .hw{display:grid;grid-template-columns:1fr;gap:24px}
+  @media(min-width:1000px){.hw{grid-template-columns:5fr 7fr;gap:48px}}
+  .hw-copy h2{font-family:var(--font-display);font-weight:600;font-size:clamp(1.75rem,4vw,2.75rem);line-height:1.05;letter-spacing:-0.035em}
+  .hw-copy h2 .em{color:var(--accent)}
+  .hw-copy p{color:var(--muted);line-height:1.55;margin-top:20px;font-size:1.0625rem;max-width:30rem}
+  .hw-copy .quote{font-family:var(--font-mono);font-size:12px;color:var(--muted);margin-top:24px;padding:14px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.015);line-height:1.55}
+  .hw-copy .quote::before{content:"—";color:var(--accent);margin-right:8px}
+
+  .hw-schem{
+    border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--surface);
+    box-shadow:0 20px 60px -30px rgba(0,0,0,.7);
+  }
+  .hw-schem-head{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)}
+  .hw-schem-head .dot{width:6px;height:6px;border-radius:999px;background:var(--accent);box-shadow:0 0 10px var(--accent-glow)}
+  .hw-schem-head .ttl{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+  .hw-schem-head .trail{margin-left:auto;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;color:var(--subtle)}
+  .hw-schem-cols{display:grid;grid-template-columns:80px 1fr 1fr 1fr 1fr;font-family:var(--font-mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--subtle);padding:10px 16px;border-bottom:1px solid var(--border)}
+
+  .hw-row{display:grid;grid-template-columns:80px 1fr 1fr 1fr 1fr;align-items:center;padding:16px;border-bottom:1px dashed var(--border)}
+  .hw-row:last-child{border-bottom:none}
+  .hw-card{display:flex;align-items:center;gap:12px}
+  .hw-card .chip{width:40px;height:26px;border-radius:4px;background:#0a0a0f;border:1px solid var(--border-2);position:relative;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:8.5px;color:var(--muted);letter-spacing:.1em}
+  .hw-card .chip::before,.hw-card .chip::after{content:"";position:absolute;width:3px;height:1px;background:var(--border-2)}
+  .hw-card .chip::before{left:-3px;top:50%}
+  .hw-card .chip::after{right:-3px;top:50%}
+  .hw-card .meta{font-family:var(--font-mono);font-size:10px;color:var(--subtle);letter-spacing:.14em;text-transform:uppercase}
+  .hw-cell{display:flex;flex-direction:column;gap:4px;padding:0 12px;border-left:1px solid var(--border)}
+  .hw-cell .k{font-family:var(--font-mono);font-size:9.5px;color:var(--subtle);letter-spacing:.18em;text-transform:uppercase}
+  .hw-cell .v{font-family:var(--font-mono);font-size:16px;color:var(--text);letter-spacing:.02em}
+  .hw-cell .v .u{color:var(--subtle);font-size:11px;margin-left:3px}
+  .hw-cell.on .v{color:var(--accent)}
+  .hw-schem-foot{display:flex;gap:18px;padding:12px 16px;background:rgba(255,255,255,.015);border-top:1px solid var(--border);font-family:var(--font-mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--subtle)}
+  .hw-schem-foot .on{color:var(--accent)}
+  @media(max-width:700px){
+    .hw-schem-cols,.hw-row{grid-template-columns:1fr 1fr;gap:8px 12px}
+    .hw-schem-cols .hide,.hw-row .hide{display:none}
+    .hw-cell{border-left:none;padding:0}
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     INDUSTRIES (§04)
+     ═══════════════════════════════════════════════════════════ */
+  .ind-row{position:relative;margin-left:-24px;margin-right:-24px}
+  @media(min-width:768px){.ind-row{margin-left:-40px;margin-right:-40px}}
+  .ind-row::before,.ind-row::after{content:"";position:absolute;top:0;bottom:0;width:64px;z-index:2;pointer-events:none}
+  .ind-row::before{left:0;background:linear-gradient(to right,var(--bg),transparent)}
+  .ind-row::after{right:0;background:linear-gradient(to left,var(--bg),transparent)}
+  .ind-scroll{display:flex;gap:8px;overflow-x:auto;padding:8px 40px;scrollbar-width:none}
+  .ind-scroll::-webkit-scrollbar{display:none}
+  .pill{
+    padding:9px 14px;border-radius:8px;white-space:nowrap;font-size:13px;font-weight:450;
+    background:var(--surface);border:1px solid var(--border);color:var(--muted);cursor:pointer;
+    transition:all 200ms var(--ease-out);font-family:var(--font-mono);letter-spacing:.04em;text-transform:uppercase;font-size:11px
+  }
+  .pill:hover{border-color:var(--border-2);background:var(--surface2);color:var(--text)}
+  .pill.on{background:color-mix(in oklab,var(--accent) 10%,transparent);border-color:color-mix(in oklab,var(--accent) 35%,transparent);color:var(--accent)}
+  .ind-count{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--subtle);margin-top:16px}
+
+  /* ═══════════════════════════════════════════════════════════
+     WHY (§05) — two-column, sticky left
+     ═══════════════════════════════════════════════════════════ */
+  .why{display:grid;grid-template-columns:1fr;gap:40px}
+  @media(min-width:1024px){.why{grid-template-columns:5fr 7fr;gap:64px;align-items:start}.why-l{position:sticky;top:128px}}
+  .why-l h2{font-family:var(--font-display);font-weight:600;font-size:clamp(1.75rem,4vw,2.75rem);line-height:1.05;letter-spacing:-0.035em}
+  .why-l h2 .em{color:var(--accent)}
+  .why-l p{color:var(--muted);line-height:1.55;margin-top:20px;font-size:1.0625rem;max-width:26rem}
+
+  /* numbered principle blocks */
+  .why-list{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--border)}
+  .why-item{padding:22px 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:48px 1fr auto;gap:16px;align-items:start;transition:background 240ms var(--ease-out)}
+  .why-item:hover{background:rgba(255,255,255,.015)}
+  .why-item .n{font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;color:var(--subtle)}
+  .why-item .ttl{font-family:var(--font-display);font-weight:500;font-size:1.25rem;letter-spacing:-0.022em;line-height:1.2}
+  .why-item .ttl+p{color:var(--muted);font-size:14.5px;line-height:1.55;margin-top:6px;max-width:36rem}
+  .why-item .tag{font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);white-space:nowrap;padding-top:4px}
+
+  /* ═══════════════════════════════════════════════════════════
+     CONTACT (§06) — terminal composer
+     ═══════════════════════════════════════════════════════════ */
+  .contact{display:grid;grid-template-columns:1fr;gap:40px}
+  @media(min-width:1024px){.contact{grid-template-columns:5fr 7fr;gap:64px}}
+  .contact-l h2{font-family:var(--font-display);font-weight:600;font-size:clamp(1.75rem,4vw,2.75rem);line-height:1.05;letter-spacing:-0.035em}
+  .contact-l h2 .em{color:var(--accent)}
+  .contact-l p{margin-top:20px;color:var(--muted);line-height:1.55;max-width:26rem;font-size:1.0625rem}
+  .contact-rows{margin-top:28px;display:flex;flex-direction:column;gap:0}
+  .contact-rows .r{display:grid;grid-template-columns:100px 1fr;gap:16px;padding:11px 0;border-bottom:1px solid var(--border);align-items:baseline}
+  .contact-rows .k{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--subtle)}
+  .contact-rows .v{font-size:14px;color:var(--text)}
+
+  .term{
+    border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--surface);
+    box-shadow:0 20px 60px -30px rgba(0,0,0,.7);
+  }
+  .term::before{content:"";display:block;height:1px;background:linear-gradient(90deg,transparent,rgba(255,90,31,.5),transparent)}
+  .term-head{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)}
+  .term-head .dot{width:6px;height:6px;border-radius:999px;background:var(--accent);box-shadow:0 0 10px var(--accent-glow)}
+  .term-head .ttl{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .term-head .trail{margin-left:auto;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;color:var(--subtle)}
+  .term-body{padding:22px 22px 18px;display:flex;flex-direction:column;gap:16px}
+  .term-field{display:grid;grid-template-columns:90px 1fr;gap:12px;align-items:baseline}
+  @media(max-width:520px){.term-field{grid-template-columns:1fr}}
+  .term-field .k{font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .term-field .k::before{content:"> ";color:var(--accent)}
+  .term-input,.term-area{
+    width:100%;padding:8px 10px;
+    background:transparent;border:none;border-bottom:1px solid var(--border);
+    color:var(--text);font-family:var(--font-body);font-size:14px;outline:none;
+    transition:border-color 200ms var(--ease-out);
+    box-sizing:border-box;
+  }
+  .term-input::placeholder,.term-area::placeholder{color:var(--subtle)}
+  .term-input:focus,.term-area:focus{border-color:var(--accent)}
+  .term-area{resize:none;min-height:68px;line-height:1.45;font-family:inherit}
+  .term-submit{
+    margin-top:8px;display:flex;align-items:center;gap:10px;justify-content:space-between;
+    padding-top:14px;border-top:1px dashed var(--border);
+  }
+  .term-hint{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--subtle)}
+
+  /* ═══════════════════════════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════════════════════════ */
+  .foot{margin-top:96px;border-top:1px solid var(--border)}
+  .foot-top{max-width:1280px;margin:0 auto;padding:40px 24px;display:grid;grid-template-columns:1fr;gap:32px}
+  @media(min-width:900px){.foot-top{grid-template-columns:2fr 1fr 1fr 1fr;padding:48px 40px}}
+  .foot-brand{display:flex;flex-direction:column;gap:10px}
+  .foot-brand .bm{display:flex;align-items:center;gap:10px}
+  .foot-brand .tag{font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--subtle);max-width:26rem;line-height:1.55}
+  .foot-col .h{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--subtle);margin-bottom:12px}
+  .foot-col a{display:block;padding:4px 0;color:var(--muted);font-size:13.5px;transition:color 180ms var(--ease-out)}
+  .foot-col a:hover{color:var(--text)}
+  .foot-bar{border-top:1px solid var(--border);max-width:1280px;margin:0 auto;padding:18px 24px;display:flex;flex-direction:column;gap:10px;align-items:flex-start;justify-content:space-between;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--subtle)}
+  @media(min-width:640px){.foot-bar{flex-direction:row;align-items:center;padding:18px 40px}}
+  .foot-bar .sp{color:var(--border-2)}
+
+  /* reveal */
+  .rv{opacity:0;transform:translateY(18px);animation:rv .7s var(--ease-out) forwards;animation-delay:var(--d,0s)}
+  @keyframes rv{to{opacity:1;transform:none}}
+  @media(prefers-reduced-motion:reduce){
+    .rv,.hero-badge .pulse::after,.h1 .caret,.sysbar .sb-live::before{animation:none!important}
+    .rv{opacity:1;transform:none}
+  }
+
+  /* mobile hiding */
+  @media(max-width:767px){.regmark,.brand-coord{display:none}}
+</style>
+</head>
+<body>
+
+<!-- ═════ SYSTEM BAR ═════ -->
+<div class="sysbar" role="status" aria-label="System status">
+  <span class="sb-live">LIVE</span>
+  <span class="sb-sep">·</span>
+  <span class="sb-item">AI2B · BCN</span>
+  <span class="sb-sep">·</span>
+  <span class="sb-item">41.38°N 2.17°E</span>
+  <span class="sb-sep">·</span>
+  <span class="sb-item">UTC+01</span>
+  <span class="sb-spacer"></span>
+  <span class="sb-item">REV 26.2</span>
+  <span class="sb-sep">·</span>
+  <span class="sb-item">UPTIME 99.98%</span>
+  <span class="sb-sep">·</span>
+  <span class="sb-item">Q2 SLOTS <span style="color:var(--accent)">03/05</span></span>
+</div>
+
+<!-- ═════ NAV ═════ -->
+<nav class="nav" aria-label="Primary">
+  <div class="nav-inner">
+    <a href="#hero" class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-wm">Ai2B</span>
+      <span class="brand-coord">Studio · Est. 2024</span>
+    </a>
+    <div class="nav-links">
+      <a class="nav-link" href="#agents"><span class="nn">01</span>Agents</a>
+      <a class="nav-link" href="#method"><span class="nn">02</span>Method</a>
+      <a class="nav-link" href="#hardware"><span class="nn">03</span>Hardware</a>
+      <a class="nav-link" href="#industries"><span class="nn">04</span>Industries</a>
+      <a class="nav-link" href="#why"><span class="nn">05</span>Why</a>
+    </div>
+    <a href="#contact" class="nav-cta">
+      Book a call
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
+    </a>
+  </div>
+</nav>
+
+<!-- ═════ LEFT RAIL ═════ -->
+<aside class="rail" aria-label="Section index">
+  <a href="#hero" data-sec="hero"><span class="dot"></span><span><span class="sect-n">§00</span> Intro</span></a>
+  <a href="#agents" data-sec="agents"><span class="dot"></span><span><span class="sect-n">§01</span> Agents</span></a>
+  <a href="#method" data-sec="method"><span class="dot"></span><span><span class="sect-n">§02</span> Method</span></a>
+  <a href="#hardware" data-sec="hardware"><span class="dot"></span><span><span class="sect-n">§03</span> Hardware</span></a>
+  <a href="#industries" data-sec="industries"><span class="dot"></span><span><span class="sect-n">§04</span> Industries</span></a>
+  <a href="#why" data-sec="why"><span class="dot"></span><span><span class="sect-n">§05</span> Why</span></a>
+  <a href="#contact" data-sec="contact"><span class="dot"></span><span><span class="sect-n">§06</span> Contact</span></a>
+</aside>
+
+<main>
+
+<!-- ═════ §00 HERO ═════ -->
+<section id="hero" class="hero wrap">
+  <span class="regmark tl" aria-hidden="true"></span>
+  <span class="regmark tr" aria-hidden="true"></span>
+  <span class="regmark bl" aria-hidden="true"></span>
+  <span class="regmark br" aria-hidden="true"></span>
+  <div class="hero-bg" aria-hidden="true"></div>
+  <div class="hero-dots" aria-hidden="true"></div>
+
+  <div class="hero-grid">
+    <div>
+      <div class="hero-badge rv" style="--d:.05s">
+        <span class="pulse"></span>
+        <span>Partnering with 3 teams · Q2 2026</span>
+      </div>
+      <h1 class="h1 rv" style="--d:.15s">
+        Custom AI systems,<br>
+        <span class="muted">built for the way</span><br>
+        <span class="accent">your business runs.</span><span class="caret"></span>
+      </h1>
+      <p class="lede rv" style="--d:.25s">
+        Not chatbots. Not SaaS wrappers. Agents that read your pipeline, write to your systems, and run on your stack.
+        <strong>Prototype in 2 weeks. Production in 4–6.</strong>
+      </p>
+      <div class="cta-row rv" style="--d:.35s">
+        <a href="#contact" class="btn-primary">
+          Book a call
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
+        </a>
+        <a href="#agents" class="btn-ghost">See the agents</a>
+        <span class="kbd"><span class="k">↓</span> scroll</span>
+      </div>
+    </div>
+
+    <div class="readout rv" style="--d:.45s" aria-hidden="true">
+      <div class="readout-head">
+        <span class="dot"></span>
+        <span class="ttl">orchestrator · node-01</span>
+        <span class="trail">03:14 CET</span>
+      </div>
+      <div class="readout-body">
+        <div class="ro-row"><span class="k">Agents</span><span class="bar" style="--pct:62%"></span><span class="v">124<span class="u">active</span></span></div>
+        <div class="ro-row"><span class="k">Throughput</span><span class="bar" style="--pct:78%"></span><span class="v">3,812<span class="u">tok/s</span></span></div>
+        <div class="ro-row"><span class="k">GPU util.</span><span class="bar" style="--pct:84%"></span><span class="v">84<span class="u">%</span></span></div>
+        <div class="ro-row"><span class="k">Egress</span><span class="bar" style="--pct:0%"></span><span class="v">0<span class="u">bytes</span></span></div>
+        <div class="ro-row"><span class="k">Uptime</span><span class="bar" style="--pct:99%"></span><span class="v">187d<span class="u">14h</span></span></div>
+      </div>
+      <div class="readout-foot">
+        <span class="lbl">LOG · tail</span>
+        <span class="log">support → <span class="ok">resolved #2041</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-meta rv" style="--d:.55s">
+    <div class="mcol"><span class="mk">First prototype</span><span class="mv">2 wks</span></div>
+    <div class="mcol"><span class="mk">In production</span><span class="mv">4–6 wks</span></div>
+    <div class="mcol"><span class="mk">Code handover</span><span class="mv">100%</span></div>
+    <div class="mcol"><span class="mk">Founded</span><span class="mv">Barcelona, 2024</span></div>
+  </div>
+</section>
+
+<!-- ═════ §01 AGENTS ═════ -->
+<div id="agents" class="wrap">
+  <div class="sect-head">
+    <div class="sect-id"><span class="glyph">§</span><span class="n">01</span><span class="glyph">/</span><span>Agents</span></div>
+    <div class="sect-rule"></div>
+    <div class="sect-meta">4 agents · 0 templates</div>
+  </div>
+
+  <div style="max-width:56rem;margin-bottom:48px">
+    <h2 style="font-family:var(--font-display);font-weight:600;font-size:clamp(2rem,5vw,3.25rem);line-height:1.05;letter-spacing:-0.035em">
+      Unlimited agents.<br>
+      <span style="color:var(--muted)">Local or cloud LLMs. Your hardware is the only ceiling.</span>
+    </h2>
+    <p style="margin-top:20px;color:var(--muted);font-size:1.0625rem;line-height:1.55;max-width:42rem">
+      Each agent is purpose-built for a job. Run one, or a hundred. On-prem or in the cloud. Scale by adding GPUs, not seats.
+    </p>
+  </div>
+
+  <div class="agents-stack">
+
+    <!-- SALES -->
+    <article class="agent-card" data-agent="sales">
+      <div class="agent-halo" aria-hidden="true"></div>
+      <div>
+        <div class="agent-head"><span class="num">§01.01</span><span class="slash">/</span><span class="name">Sales_Agent</span></div>
+        <h3 class="agent-name">Reads the pipeline.<br><span class="em">Writes the follow-ups.</span></h3>
+        <p class="agent-role">Qualifies inbound in under a second. Drafts replies in your voice. Closes the CRM loop.</p>
+        <ul class="agent-caps">
+          <li><span class="dot"></span>Scores inbound leads against your ICP in real time.</li>
+          <li><span class="dot"></span>Drafts follow-up emails in your tone, from your domain.</li>
+          <li><span class="dot"></span>Updates deal stage, contact fields, next-step tasks automatically.</li>
+        </ul>
+        <div class="spec">
+          <div class="spec-row"><span class="k">Reads</span><span class="v"><b>Email</b> · <b>Calls</b> · <b>CRM</b> · <b>Website visits</b></span></div>
+          <div class="spec-row"><span class="k">Writes</span><span class="v"><b>Follow-ups</b> · <b>Deal stage</b> · <b>Task list</b></span></div>
+          <div class="spec-row"><span class="k">Runs on</span><span class="v">Llama 3.3 70B · 1× H100 · on-prem</span></div>
+          <div class="spec-row"><span class="k">Latency</span><span class="v">~420ms · p95 &lt; 900ms</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="frame">
+          <div class="fr-head">
+            <span class="ind"></span>
+            <span class="fn">sales_agent<span class="ext">.live.tsx</span></span>
+            <span class="t">03:14:22</span>
+          </div>
+          <div class="fr-body">
+            <div class="chat">
+              <div class="bub lead"><span class="w">Lead · acme.co</span>Hi, do you integrate with HubSpot?</div>
+              <div class="bub bot"><span class="w">Sales_Agent</span>Yes — 2-way sync, real-time. What's your volume?</div>
+              <div class="bub lead"><span class="w">Lead · acme.co</span>Around 1,200 new leads / month.</div>
+              <div class="bub bot"><span class="w">Sales_Agent</span>Got it. Booked you with Ana tomorrow 10:30. Confirmation sent.</div>
+            </div>
+            <div class="minpipe">
+              <div class="minpipe-head"><span class="k">Pipeline · today</span><span class="v">+1 deal</span></div>
+              <div class="minpipe-stages">
+                <div class="s on"><div class="bar"></div><div class="lab">New</div></div>
+                <div class="s on"><div class="bar"></div><div class="lab">Qualified</div></div>
+                <div class="s on"><div class="bar"></div><div class="lab">Demo</div></div>
+                <div class="s"><div class="bar"></div><div class="lab">Won</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- SUPPORT -->
+    <article class="agent-card" data-agent="support">
+      <div class="agent-halo" aria-hidden="true"></div>
+      <div>
+        <div class="agent-head"><span class="num">§01.02</span><span class="slash">/</span><span class="name">Support_Agent</span></div>
+        <h3 class="agent-name">Triages, resolves,<br><span class="em">escalates — 24/7.</span></h3>
+        <p class="agent-role">Classifies tickets by intent and urgency. Answers from your docs — with citations. Escalates the 3% that actually need a human.</p>
+        <ul class="agent-caps">
+          <li><span class="dot"></span>Reads the ticket, the user's history, and your internal KB.</li>
+          <li><span class="dot"></span>Replies with cited answers in your support voice.</li>
+          <li><span class="dot"></span>Tags, routes, escalates. Writes back to the knowledge base.</li>
+        </ul>
+        <div class="spec">
+          <div class="spec-row"><span class="k">Reads</span><span class="v"><b>Tickets</b> · <b>Docs</b> · <b>Chat</b> · <b>Past resolutions</b></span></div>
+          <div class="spec-row"><span class="k">Writes</span><span class="v"><b>Replies</b> · <b>Tags</b> · <b>Knowledge base</b></span></div>
+          <div class="spec-row"><span class="k">Runs on</span><span class="v">Llama 3.3 70B · 1× H100 · on-prem</span></div>
+          <div class="spec-row"><span class="k">Resolves</span><span class="v">97% auto · 3% to human</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="frame">
+          <div class="fr-head">
+            <span class="ind"></span>
+            <span class="fn">support_agent<span class="ext">.live.tsx</span></span>
+            <span class="t">03:14:47</span>
+          </div>
+          <div class="fr-body">
+            <div class="queue">
+              <div class="tck"><span class="n">#2041</span><span>Refund — order delayed</span><span class="tag" style="background:#E85D7522;border:1px solid #E85D7540;color:#E85D75">Resolved</span></div>
+              <div class="tck"><span class="n">#2042</span><span>Login failing on Android</span><span class="tag" style="background:#FFB84D22;border:1px solid #FFB84D40;color:#FFB84D">Triaged</span></div>
+              <div class="tck"><span class="n">#2043</span><span>Invoice — wrong tax (Acme)</span><span class="tag" style="background:#6EA8FE22;border:1px solid #6EA8FE40;color:#6EA8FE">→ Human</span></div>
+              <div class="tck"><span class="n">#2044</span><span>How do I export to CSV?</span><span class="tag" style="background:#E85D7522;border:1px solid #E85D7540;color:#E85D75">Resolved</span></div>
+              <div class="tck" style="opacity:.45"><span class="n">#2045</span><span>Can I change my plan?</span><span class="tag" style="color:var(--subtle);background:rgba(255,255,255,.02);border:1px solid var(--border)">New</span></div>
+            </div>
+            <div class="minpipe">
+              <div class="minpipe-head"><span class="k">Queue · today</span><span class="v">142 tickets · 3% escalated</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- OPS -->
+    <article class="agent-card" data-agent="ops">
+      <div class="agent-halo" aria-hidden="true"></div>
+      <div>
+        <div class="agent-head"><span class="num">§01.03</span><span class="slash">/</span><span class="name">Ops_Agent</span></div>
+        <h3 class="agent-name">Keeps the rota,<br><span class="em">stock and staff in sync.</span></h3>
+        <p class="agent-role">Re-balances the schedule when a shift drops. Reorders stock from demand signals. Flags anomalies before they become fires.</p>
+        <ul class="agent-caps">
+          <li><span class="dot"></span>Watches sales, footfall, inventory and weather signals.</li>
+          <li><span class="dot"></span>Rewrites next week's rota to minimize overtime.</li>
+          <li><span class="dot"></span>Pushes alerts to managers only when they're actionable.</li>
+        </ul>
+        <div class="spec">
+          <div class="spec-row"><span class="k">Reads</span><span class="v"><b>Rota</b> · <b>Inventory</b> · <b>Sales</b> · <b>Sensors</b></span></div>
+          <div class="spec-row"><span class="k">Writes</span><span class="v"><b>Schedule</b> · <b>Orders</b> · <b>Alerts</b></span></div>
+          <div class="spec-row"><span class="k">Runs on</span><span class="v">Mixtral 8×7B · 1× RTX 4090 · on-prem</span></div>
+          <div class="spec-row"><span class="k">Cycle</span><span class="v">Overnight · 02:00 CET</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="frame">
+          <div class="fr-head">
+            <span class="ind"></span>
+            <span class="fn">ops_agent<span class="ext">.live.tsx</span></span>
+            <span class="t">02:00:06</span>
+          </div>
+          <div class="fr-body">
+            <div class="rota">
+              <div class="hd"></div><div class="hd">Mon</div><div class="hd">Tue</div><div class="hd">Wed</div><div class="hd">Thu</div><div class="hd">Fri</div>
+              <div class="hd">Ana</div><div class="c fill">9-5</div><div class="c fill">9-5</div><div class="c">—</div><div class="c fill">9-5</div><div class="c fill">9-5</div>
+              <div class="hd">Luis</div><div class="c fill">12-8</div><div class="c auto">12-8*</div><div class="c fill">12-8</div><div class="c">—</div><div class="c fill">12-8</div>
+              <div class="hd">Marta</div><div class="c">—</div><div class="c fill">8-4</div><div class="c fill">8-4</div><div class="c fill">8-4</div><div class="c auto">8-4*</div>
+              <div class="hd">Pau</div><div class="c fill">10-6</div><div class="c fill">10-6</div><div class="c fill">10-6</div><div class="c fill">10-6</div><div class="c">—</div>
+            </div>
+            <div class="minpipe">
+              <div class="minpipe-head"><span class="k">Rebalanced · overnight</span><span class="v">2 shifts · 03:14 saved</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- RESEARCH -->
+    <article class="agent-card" data-agent="research">
+      <div class="agent-halo" aria-hidden="true"></div>
+      <div>
+        <div class="agent-head"><span class="num">§01.04</span><span class="slash">/</span><span class="name">Research_Agent</span></div>
+        <h3 class="agent-name">Reads everything<br><span class="em">you don't have time for.</span></h3>
+        <p class="agent-role">Digests contracts, papers and reports. Extracts what matters. Cites the source. Turns a 40-page PDF into a 5-line brief.</p>
+        <ul class="agent-caps">
+          <li><span class="dot"></span>Ingests PDFs, emails, web pages, Drive folders.</li>
+          <li><span class="dot"></span>Answers questions with section-level citations.</li>
+          <li><span class="dot"></span>Surfaces risk clauses, buried numbers, contradicting sources.</li>
+        </ul>
+        <div class="spec">
+          <div class="spec-row"><span class="k">Reads</span><span class="v"><b>PDFs</b> · <b>Emails</b> · <b>Web</b> · <b>Drive</b></span></div>
+          <div class="spec-row"><span class="k">Writes</span><span class="v"><b>Summaries</b> · <b>Citations</b> · <b>Q&amp;A</b></span></div>
+          <div class="spec-row"><span class="k">Runs on</span><span class="v">Qwen2.5 72B · 1× H100 · on-prem</span></div>
+          <div class="spec-row"><span class="k">Context</span><span class="v">128k tokens · reranked</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="frame">
+          <div class="fr-head">
+            <span class="ind"></span>
+            <span class="fn">research_agent<span class="ext">.live.tsx</span></span>
+            <span class="t">scanning…</span>
+          </div>
+          <div class="fr-body">
+            <div class="docs">
+              <div class="doc">
+                <div class="t">Acme supply contract · 2026 renewal <span class="bd">Risk</span></div>
+                <div class="line"></div><div class="line s"></div><div class="line ss"></div>
+                <div class="cite">§ 4.2 · p. 14</div>
+              </div>
+              <div class="doc">
+                <div class="t">Q3 sector report · hospitality <span class="bd">Brief</span></div>
+                <div class="line"></div><div class="line s"></div>
+                <div class="cite">5-line brief · ready</div>
+              </div>
+              <div class="doc" style="opacity:.55">
+                <div class="t">Supplier MSA · draft v3 <span class="bd">Compare</span></div>
+                <div class="line"></div><div class="line ss"></div>
+              </div>
+            </div>
+            <div class="minpipe">
+              <div class="minpipe-head"><span class="k">Processed today</span><span class="v">47 docs · 182 citations</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</div>
+
+<!-- ═════ §02 METHOD ═════ -->
+<div id="method" class="wrap">
+  <div class="sect-head">
+    <div class="sect-id"><span class="glyph">§</span><span class="n">02</span><span class="glyph">/</span><span>Method</span></div>
+    <div class="sect-rule"></div>
+    <div class="sect-meta">4–6 wks end-to-end</div>
+  </div>
+
+  <div style="max-width:42rem;margin-bottom:40px">
+    <h2 style="font-family:var(--font-display);font-weight:600;font-size:clamp(1.75rem,4vw,2.75rem);line-height:1.05;letter-spacing:-0.035em">
+      Three steps. Zero fluff.
+    </h2>
+    <p style="margin-top:16px;color:var(--muted);line-height:1.55;font-size:1rem">
+      One transparent process. Clear deliverables at every stage. You always know what's shipping next, and why.
+    </p>
+  </div>
+
+  <div class="method">
+    <div class="mstep">
+      <div class="mstep-n"><span>01 · Diagnose</span><span class="wk">wk 1</span></div>
+      <div>
+        <div class="mstep-ttl">Map the workflow.</div>
+        <div class="mstep-desc">Two days on-site. We shadow the team, tag bottlenecks, pull data samples. Then you get a short memo — what we'd build, and what we'd leave alone.</div>
+      </div>
+      <div class="mstep-deliv">
+        <div class="k">Deliverables</div>
+        <ul>
+          <li>Workflow audit</li>
+          <li>Opportunity memo (6p)</li>
+          <li>Scope &amp; budget</li>
+        </ul>
+      </div>
+    </div>
+    <div class="mstep">
+      <div class="mstep-n"><span>02 · Build</span><span class="wk">wk 2–5</span></div>
+      <div>
+        <div class="mstep-ttl">Ship the system.</div>
+        <div class="mstep-desc">Custom code on your stack, in your language. Weekly demos. No moving targets, no mystery estimates. You see the agent running on your data by week two.</div>
+      </div>
+      <div class="mstep-deliv">
+        <div class="k">Deliverables</div>
+        <ul>
+          <li>Working prototype (wk 2)</li>
+          <li>Production build (wk 5)</li>
+          <li>Runbook &amp; tests</li>
+        </ul>
+      </div>
+    </div>
+    <div class="mstep">
+      <div class="mstep-n"><span>03 · Hand over</span><span class="wk">wk 6+</span></div>
+      <div>
+        <div class="mstep-ttl">Yours, fully.</div>
+        <div class="mstep-desc">Full source, infra scripts, training materials. We stay on retainer to tune, scale and add agents — or we don't. Your call. No lock-in, ever.</div>
+      </div>
+      <div class="mstep-deliv">
+        <div class="k">Deliverables</div>
+        <ul>
+          <li>Source + infra</li>
+          <li>Team training (2 sessions)</li>
+          <li>Optional retainer</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════ §03 HARDWARE ═════ -->
+<div id="hardware" class="wrap">
+  <div class="sect-head">
+    <div class="sect-id"><span class="glyph">§</span><span class="n">03</span><span class="glyph">/</span><span>Hardware is the ceiling</span></div>
+    <div class="sect-rule"></div>
+    <div class="sect-meta">on-prem · no egress</div>
+  </div>
+
+  <div class="hw">
+    <div class="hw-copy">
+      <h2>Scale by adding <span class="em">GPUs</span>, not subscriptions.</h2>
+      <p>Your agents run on your hardware. One box does four. A rack does forty. Two racks do four hundred. Your data never leaves your network — and your cost curve is a line, not a subscription.</p>
+      <div class="quote">We don't charge per-seat. We don't charge per-token. You pay us once to build it, and then you pay your electricity bill.</div>
+    </div>
+
+    <div class="hw-schem">
+      <div class="hw-schem-head">
+        <span class="dot"></span>
+        <span class="ttl">capacity · measured</span>
+        <span class="trail">Llama 3.3 70B · Q4_K_M</span>
+      </div>
+      <div class="hw-schem-cols">
+        <div>Hardware</div>
+        <div>Agents</div>
+        <div>Throughput</div>
+        <div class="hide">Latency</div>
+        <div>Egress</div>
+      </div>
+
+      <div class="hw-row">
+        <div class="hw-card">
+          <div class="chip">4090</div>
+          <div class="meta">24GB · 1×</div>
+        </div>
+        <div class="hw-cell"><span class="k">Agents</span><span class="v">~4</span></div>
+        <div class="hw-cell"><span class="k">Tok/s</span><span class="v">30<span class="u">tok/s</span></span></div>
+        <div class="hw-cell hide"><span class="k">Lat p95</span><span class="v">920<span class="u">ms</span></span></div>
+        <div class="hw-cell on"><span class="k">Egress</span><span class="v">0<span class="u">bytes</span></span></div>
+      </div>
+
+      <div class="hw-row">
+        <div class="hw-card">
+          <div class="chip">H100</div>
+          <div class="meta">80GB · 1×</div>
+        </div>
+        <div class="hw-cell"><span class="k">Agents</span><span class="v">~40</span></div>
+        <div class="hw-cell"><span class="k">Tok/s</span><span class="v">180<span class="u">tok/s</span></span></div>
+        <div class="hw-cell hide"><span class="k">Lat p95</span><span class="v">420<span class="u">ms</span></span></div>
+        <div class="hw-cell on"><span class="k">Egress</span><span class="v">0<span class="u">bytes</span></span></div>
+      </div>
+
+      <div class="hw-row">
+        <div class="hw-card">
+          <div class="chip">H100×8</div>
+          <div class="meta">640GB · 1 node</div>
+        </div>
+        <div class="hw-cell"><span class="k">Agents</span><span class="v">~400</span></div>
+        <div class="hw-cell"><span class="k">Tok/s</span><span class="v">1,800<span class="u">tok/s</span></span></div>
+        <div class="hw-cell hide"><span class="k">Lat p95</span><span class="v">380<span class="u">ms</span></span></div>
+        <div class="hw-cell on"><span class="k">Egress</span><span class="v">0<span class="u">bytes</span></span></div>
+      </div>
+
+      <div class="hw-schem-foot">
+        <span>CLOUD</span>
+        <span class="sp">·</span>
+        <span>ON-PREM</span>
+        <span class="sp">·</span>
+        <span class="on">HYBRID</span>
+        <span class="sp">·</span>
+        <span>AIR-GAPPED</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════ §04 INDUSTRIES ═════ -->
+<div id="industries" class="wrap">
+  <div class="sect-head">
+    <div class="sect-id"><span class="glyph">§</span><span class="n">04</span><span class="glyph">/</span><span>Industries</span></div>
+    <div class="sect-rule"></div>
+    <div class="sect-meta">who we build for</div>
+  </div>
+
+  <div style="max-width:42rem;margin-bottom:32px">
+    <h2 style="font-family:var(--font-display);font-weight:600;font-size:clamp(1.75rem,4vw,2.75rem);line-height:1.05;letter-spacing:-0.035em">
+      Every industry.<br><span style="color:var(--muted)">One connected approach.</span>
+    </h2>
+  </div>
+
+  <div class="ind-row">
+    <div class="ind-scroll">
+      <span class="pill">Restaurants &amp; Hospitality</span>
+      <span class="pill">Legal &amp; Compliance</span>
+      <span class="pill">Marketing &amp; Creative</span>
+      <span class="pill">E-commerce &amp; Retail</span>
+      <span class="pill">Healthcare &amp; Clinics</span>
+      <span class="pill on">HR &amp; Recruitment</span>
+      <span class="pill">Finance &amp; Accounting</span>
+      <span class="pill">Real Estate</span>
+      <span class="pill">Education &amp; Training</span>
+      <span class="pill">Logistics &amp; Supply</span>
+      <span class="pill">Manufacturing</span>
+    </div>
+  </div>
+  <div class="ind-count">11 sectors shipped · 6 in flight</div>
+</div>
+
+<!-- ═════ §05 WHY ═════ -->
+<div id="why" class="wrap">
+  <div class="sect-head">
+    <div class="sect-id"><span class="glyph">§</span><span class="n">05</span><span class="glyph">/</span><span>Why Ai2B</span></div>
+    <div class="sect-rule"></div>
+    <div class="sect-meta">the short version</div>
+  </div>
+
+  <div class="why">
+    <div class="why-l">
+      <h2>Most teams don't need another chatbot. They need a system <span class="em">built for them.</span></h2>
+      <p>Engineers, designers and strategists. Based in Barcelona, working EU-wide. Our edge: we actually ship.</p>
+    </div>
+    <div class="why-r">
+      <div class="why-list">
+        <div class="why-item">
+          <span class="n">01</span>
+          <div>
+            <div class="ttl">No generic tools.</div>
+            <p>Every system is shaped around your workflows, your data, your language. We don't retrofit a template onto your business.</p>
+          </div>
+          <span class="tag">Custom</span>
+        </div>
+        <div class="why-item">
+          <span class="n">02</span>
+          <div>
+            <div class="ttl">Multilingual by default.</div>
+            <p>Spanish, Portuguese and English out of the gate. Agents read and write in the language your team already uses.</p>
+          </div>
+          <span class="tag">ES · PT · EN</span>
+        </div>
+        <div class="why-item">
+          <span class="n">03</span>
+          <div>
+            <div class="ttl">Fast to ship.</div>
+            <p>Prototype in 2 weeks. Production in 4–6. We don't do quarterly roadmaps — we do weekly demos.</p>
+          </div>
+          <span class="tag">2 → 6 wks</span>
+        </div>
+        <div class="why-item">
+          <span class="n">04</span>
+          <div>
+            <div class="ttl">You own the code.</div>
+            <p>Full source, infra scripts, training materials. You can fire us the day after we ship. No vendor lock-in. Ever.</p>
+          </div>
+          <span class="tag">100% handover</span>
+        </div>
+        <div class="why-item">
+          <span class="n">05</span>
+          <div>
+            <div class="ttl">On-prem if you want it.</div>
+            <p>Your data never leaves your network. Local LLMs, your hardware, your rules. No egress, no vendor API, no leaks.</p>
+          </div>
+          <span class="tag">0 bytes egress</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════ §06 CONTACT ═════ -->
+<div id="contact" class="wrap">
+  <div class="sect-head">
+    <div class="sect-id"><span class="glyph">§</span><span class="n">06</span><span class="glyph">/</span><span>Contact</span></div>
+    <div class="sect-rule"></div>
+    <div class="sect-meta">response · within 24h</div>
+  </div>
+
+  <div class="contact">
+    <div class="contact-l">
+      <h2>Tell us what's <span class="em">slow.</span></h2>
+      <p>Point at the workflow that's costing your team hours. We'll send back a short note on whether AI is the right fix — or whether it isn't. No pitch decks. No calendar tennis.</p>
+      <div class="contact-rows">
+        <div class="r"><span class="k">Email</span><span class="v">hello@ai2b.io</span></div>
+        <div class="r"><span class="k">Office</span><span class="v">Barcelona · working EU-wide</span></div>
+        <div class="r"><span class="k">Response</span><span class="v">Within 24 hours · founder replies</span></div>
+        <div class="r"><span class="k">Capacity</span><span class="v">3 of 5 Q2 slots booked</span></div>
+      </div>
+    </div>
+    <div class="term">
+      <div class="term-head">
+        <span class="dot"></span>
+        <span class="ttl">new_project · intake</span>
+        <span class="trail">field 01 / 04</span>
+      </div>
+      <form class="term-body" onsubmit="event.preventDefault();this.reset();alert('Demo form — thanks!')">
+        <div class="term-field">
+          <span class="k">from</span>
+          <input class="term-input" type="text" placeholder="your name" required>
+        </div>
+        <div class="term-field">
+          <span class="k">email</span>
+          <input class="term-input" type="email" placeholder="you@company.com" required>
+        </div>
+        <div class="term-field">
+          <span class="k">company</span>
+          <input class="term-input" type="text" placeholder="restaurant group · law firm · e-commerce ·&hellip;">
+        </div>
+        <div class="term-field">
+          <span class="k">slow</span>
+          <textarea class="term-area" placeholder="which workflow is costing your team the most hours?"></textarea>
+        </div>
+        <div class="term-submit">
+          <span class="term-hint">No NDA needed. We reply before we sign.</span>
+          <button type="submit" class="btn-primary">
+            Send
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- ═════ FOOTER ═════ -->
+<footer class="foot">
+  <div class="foot-top">
+    <div class="foot-brand">
+      <div class="bm">
+        <span class="brand-mark" style="width:22px;height:22px"></span>
+        <span class="brand-wm" style="font-size:17px">Ai2B</span>
+      </div>
+      <p class="tag">Custom AI agent systems for businesses that actually ship. Barcelona · EU-wide · Est. 2024.</p>
+    </div>
+    <div class="foot-col">
+      <div class="h">System</div>
+      <a href="#agents">Agents</a>
+      <a href="#method">Method</a>
+      <a href="#hardware">Hardware</a>
+    </div>
+    <div class="foot-col">
+      <div class="h">Studio</div>
+      <a href="#why">Why Ai2B</a>
+      <a href="#industries">Industries</a>
+      <a href="#contact">Contact</a>
+    </div>
+    <div class="foot-col">
+      <div class="h">Elsewhere</div>
+      <a href="mailto:hello@ai2b.io">hello@ai2b.io</a>
+      <a href="#">LinkedIn ↗</a>
+      <a href="#">GitHub ↗</a>
+    </div>
+  </div>
+  <div class="foot-bar">
+    <span>© 2026 Ai2B S.L. · Barcelona</span>
+    <span class="sp">·</span>
+    <span>v26.2 · deployed 03:14 CET</span>
+    <span class="sp">·</span>
+    <span style="margin-left:auto">Partnering with 3 teams · Q2 2026</span>
+  </div>
+</footer>
+
+<div class="grain" aria-hidden="true"></div>
+
+<script>
+  // Section index: mark the rail item whose section is in view.
+  (function(){
+    const rail = document.querySelectorAll('.rail a[data-sec]');
+    if (!rail.length) return;
+    const secs = Array.from(rail).map(a => ({a, el: document.getElementById(a.dataset.sec)})).filter(x => x.el);
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        rail.forEach(a => a.classList.toggle('is-active', a.dataset.sec === e.target.id));
+      });
+    }, { rootMargin: '-40% 0px -55% 0px', threshold: 0 });
+    secs.forEach(s => obs.observe(s.el));
+  })();
+</script>
+
+</body>
+</html>

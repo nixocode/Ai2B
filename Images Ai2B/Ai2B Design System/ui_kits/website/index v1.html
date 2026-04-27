@@ -1,0 +1,740 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ai2B — Custom AI Software for Real Businesses</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;450;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    letter-spacing: -0.011em;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  .grain-overlay{position:fixed;inset:0;background-image:url('../../assets/noise.svg');background-size:160px 160px;opacity:.025;pointer-events:none;z-index:9999;mix-blend-mode:overlay}
+
+  /* Section */
+  .section { padding: 6rem 1.5rem; max-width: 1240px; margin: 0 auto; }
+  @media (min-width: 768px) { .section { padding: 8rem 2.5rem; } }
+
+  /* ── Nav ── */
+  .nav { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 50; width: min(1180px, calc(100% - 24px)); }
+  .nav-shell {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 6px 6px 6px 16px; border-radius: 999px;
+    background: rgba(14,14,19,.55); border: 1px solid var(--border);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 8px 24px -14px rgba(0,0,0,.6);
+    transition: background 240ms var(--ease-out), border-color 240ms var(--ease-out);
+  }
+  .nav-brand { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text); }
+  .nav-logo-mark {
+    width: 22px; height: 22px; border-radius: 999px; position: relative;
+    background: radial-gradient(circle at 30% 30%, #ff8a55, var(--accent) 60%, #c73e0f 100%);
+    box-shadow: 0 0 0 1px rgba(255,255,255,.1) inset, 0 0 18px rgba(255,90,31,.45);
+  }
+  .nav-logo-mark::after { content:""; position:absolute; inset:0; margin:auto; width:4px; height:4px; border-radius:999px; background: var(--bg); }
+  .nav-brand .wm { font-size: 15px; font-weight: 500; letter-spacing: -0.022em; }
+  .nav-links { display: none; list-style: none; gap: 2px; margin: 0 auto; }
+  @media (min-width: 768px) { .nav-links { display: flex; } }
+  .nav-link {
+    display: inline-flex; align-items: center; padding: .5rem .875rem;
+    font-size: 13.5px; font-weight: 450; color: var(--muted);
+    border-radius: 999px; text-decoration: none;
+    transition: color 180ms var(--ease-out), background 180ms var(--ease-out);
+  }
+  .nav-link:hover { color: var(--text); background: rgba(255,255,255,.04); }
+  .nav-cta {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: .5rem .9rem; font-size: 13px; font-weight: 500;
+    color: #fff; background: var(--accent); border-radius: 999px;
+    text-decoration: none; letter-spacing: -0.005em;
+    box-shadow: 0 1px 0 rgba(255,255,255,.18) inset, 0 6px 16px -6px var(--accent-glow);
+    transition: background 180ms var(--ease-out), transform 180ms var(--ease-out);
+  }
+  .nav-cta:hover { background: var(--accent-soft); transform: translateY(-1px); }
+
+  /* ── Buttons ── */
+  .btn-primary, .btn-ghost {
+    display: inline-flex; align-items: center; gap: .5rem;
+    font-weight: 500; padding: .8rem 1.4rem; border-radius: 10px;
+    font-size: .95rem; font-family: inherit; text-decoration: none; cursor: pointer; border: none;
+    transition: all 200ms var(--ease-out);
+  }
+  .btn-primary { background: var(--accent); color: #fff;
+    box-shadow: 0 1px 0 rgba(255,255,255,.15) inset, 0 6px 18px -6px var(--accent-glow); }
+  .btn-primary:hover { background: var(--accent-soft); transform: translateY(-1px); }
+  .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border-2); }
+  .btn-ghost:hover { border-color: var(--text); background: rgba(255,255,255,.04); }
+
+  /* ── Card ── */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; transition: all 250ms var(--ease-out); }
+  .card:hover { border-color: var(--border-2); background: var(--surface2); }
+
+  /* ── Hero ── */
+  .hero { position: relative; min-height: 100vh; display: flex; align-items: center; overflow: hidden; padding-top: 112px; }
+  .hero-bg {
+    position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(60% 60% at 62% 38%, rgba(255,90,31,.30), transparent 65%),
+      radial-gradient(50% 50% at 28% 74%, rgba(32,20,65,.55), transparent 70%),
+      radial-gradient(70% 70% at 78% 78%, rgba(255,122,63,.12), transparent 75%),
+      var(--bg);
+  }
+  .hero-bg::after{
+    content:""; position:absolute; inset:0;
+    background: linear-gradient(180deg, rgba(10,10,15,.2) 0%, rgba(10,10,15,.55) 55%, var(--bg) 100%);
+  }
+  .hero-dots { position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0.06;
+    background-image: radial-gradient(rgba(245,245,247,.7) 1px, transparent 1px);
+    background-size: 28px 28px;
+    -webkit-mask-image: radial-gradient(ellipse 70% 55% at 50% 45%, black 30%, transparent 85%);
+    mask-image: radial-gradient(ellipse 70% 55% at 50% 45%, black 30%, transparent 85%);
+  }
+  .hero-inner { position: relative; z-index: 10; width: 100%; max-width: 1152px; margin: 0 auto; padding: 64px 24px; }
+  @media (min-width: 768px) { .hero-inner { padding: 64px 40px; } }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 6px 12px; border-radius: 999px;
+    background: rgba(17,17,23,.55); border: 1px solid var(--border);
+    backdrop-filter: blur(12px); margin-bottom: 32px;
+  }
+  .hero-dot { position: relative; width: 8px; height: 8px; }
+  .hero-dot::before, .hero-dot::after {
+    content:""; position: absolute; inset: 0; border-radius: 999px; background: var(--accent);
+  }
+  .hero-dot::before { animation: pulse-ring 2.2s ease-out infinite; }
+  @keyframes pulse-ring {
+    0%{box-shadow:0 0 0 0 rgba(255,90,31,.4)}
+    70%{box-shadow:0 0 0 10px rgba(255,90,31,0)}
+    100%{box-shadow:0 0 0 0 rgba(255,90,31,0)}
+  }
+  .h1 {
+    font-family: var(--font-display); font-weight: 600;
+    font-size: clamp(2.75rem, 8vw, 6.25rem);
+    line-height: 1.05; letter-spacing: -0.035em; color: var(--text);
+    max-width: 64rem;
+  }
+  .hero p.lede { font-size: clamp(1.125rem, 1.8vw, 1.25rem); margin-top: 32px; max-width: 36rem; line-height: 1.55; color: rgba(245,245,247,.75); }
+  .hero .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 40px; }
+  .hero .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; max-width: 36rem; margin-top: 64px; }
+  .hero .stat-k { font-family: var(--font-display); font-weight: 500; font-size: clamp(1.5rem, 2.4vw, 1.875rem); line-height: 1.15; letter-spacing: -0.022em; }
+  .scroll-hint { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; color: var(--muted); text-decoration: none; }
+  .scroll-hint svg { animation: bounce-down 2s ease-in-out infinite; }
+  @keyframes bounce-down { 0%,100%{transform:translateY(0);opacity:.55} 50%{transform:translateY(6px);opacity:1} }
+
+  /* ── Section intro ── */
+  .section-intro { margin-bottom: 56px; }
+  .section-intro h2 { font-family: var(--font-display); font-weight: 600; line-height: 1.05; letter-spacing: -0.035em; font-size: clamp(2rem, 5vw, 3.75rem); max-width: 48rem; }
+  .text-accent { color: var(--accent); }
+  .text-muted { color: var(--muted); }
+
+  /* ── Grids ── */
+  .grid-3 { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  @media (min-width: 768px) { .grid-3 { grid-template-columns: repeat(3, 1fr); } }
+  .grid-2 { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  @media (min-width: 640px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
+
+  .icon-chip {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px; border-radius: 12px;
+    background: var(--accent-wash); border: 1px solid rgba(255,90,31,.2); color: var(--accent);
+  }
+
+  /* ── Step cards ── */
+  .step .step-no { font-family: var(--font-display); font-weight: 500; font-size: 44px; line-height: 1; color: var(--accent); }
+  .step { position: relative; overflow: hidden; }
+  .step .row-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
+  .step h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.25rem; letter-spacing: -0.022em; margin-bottom: 6px; }
+  .step p { color: var(--muted); font-size: 15px; line-height: 1.6; }
+
+  /* ── Agent panels ── */
+  .agent-panel { margin-bottom: 24px; padding: 24px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border); position: relative; }
+  .agent-panel::before { content:""; position: absolute; top:0; left:0; right:0; height: 1px; }
+  .agent-panel[data-agent="sales"]::before   { background: linear-gradient(90deg, transparent, #FF5A1F80, transparent); }
+  .agent-panel[data-agent="support"]::before { background: linear-gradient(90deg, transparent, #E85D7580, transparent); }
+  .agent-panel[data-agent="ops"]::before     { background: linear-gradient(90deg, transparent, #FFB84D80, transparent); }
+  .agent-panel[data-agent="research"]::before{ background: linear-gradient(90deg, transparent, #6EA8FE80, transparent); }
+
+  .agent-grid { display: grid; grid-template-columns: 1fr; gap: 32px; align-items: center; }
+  @media (min-width: 960px) { .agent-grid { grid-template-columns: 1fr 1fr; gap: 56px; } }
+  .agent-eyebrow { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+  .agent-eyebrow .chip { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+  .agent-eyebrow .lbl { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.22em; }
+  .agent-name { font-family: var(--font-display); font-weight: 600; font-size: clamp(2rem, 4vw, 2.75rem); line-height: 1.05; letter-spacing: -0.035em; margin-bottom: 16px; }
+  .agent-role { font-size: 1.125rem; color: rgba(245,245,247,.85); max-width: 34rem; margin-bottom: 28px; line-height: 1.5; }
+  .agent-caps { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+  .agent-caps li { display: flex; gap: 12px; font-size: 15px; }
+  .agent-caps .dot { flex-shrink: 0; width: 6px; height: 6px; border-radius: 999px; margin-top: 8px; }
+  .stack-box { border-radius: 14px; padding: 16px; background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0) 70%), var(--surface2); border: 1px solid var(--border); }
+  .stack-cols { display: flex; gap: 24px; margin-bottom: 12px; }
+  .stack-col { flex: 1; }
+  .stack-col .lbl { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.16em; margin-bottom: 8px; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip-row span { padding: 3px 8px; border-radius: 6px; background: rgba(255,255,255,.035); border: 1px solid var(--border); font-size: 11.5px; }
+  .stack-bullet { padding-top: 12px; border-top: 1px solid var(--border); font-size: 13px; font-style: italic; color: var(--muted); }
+
+  /* AgentFrame visual */
+  .agent-frame-wrap { position: relative; }
+  .agent-frame-wrap::before {
+    content: ""; position: absolute; inset: -24px; border-radius: 24px; z-index: -1;
+    filter: blur(24px);
+  }
+  .agent-frame-wrap[data-agent="sales"]::before   { background: radial-gradient(circle at 60% 40%, #FF5A1F22, transparent 60%); }
+  .agent-frame-wrap[data-agent="support"]::before { background: radial-gradient(circle at 60% 40%, #E85D7522, transparent 60%); }
+  .agent-frame-wrap[data-agent="ops"]::before     { background: radial-gradient(circle at 60% 40%, #FFB84D22, transparent 60%); }
+  .agent-frame-wrap[data-agent="research"]::before{ background: radial-gradient(circle at 60% 40%, #6EA8FE22, transparent 60%); }
+  .agent-frame {
+    position: relative; aspect-ratio: 1/1; width: 100%; max-width: 480px; margin: 0 auto;
+    border-radius: 16px; overflow: hidden;
+    background: linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,0) 60%), var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: 0 20px 60px -30px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.02) inset;
+  }
+  .agent-frame::before { content:""; position:absolute; top:0; left:0; right:0; height: 1px; }
+  .agent-frame[data-agent="sales"]::before   { background: linear-gradient(90deg, transparent, #FF5A1F80, transparent); }
+  .agent-frame[data-agent="support"]::before { background: linear-gradient(90deg, transparent, #E85D7580, transparent); }
+  .agent-frame[data-agent="ops"]::before     { background: linear-gradient(90deg, transparent, #FFB84D80, transparent); }
+  .agent-frame[data-agent="research"]::before{ background: linear-gradient(90deg, transparent, #6EA8FE80, transparent); }
+  .agent-header { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .agent-header .ind { width: 8px; height: 8px; border-radius: 999px; }
+  .agent-header .lbl { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted); }
+  .agent-header .dots { margin-left: auto; display: flex; gap: 4px; }
+  .agent-header .dots span { width: 4px; height: 4px; border-radius: 999px; background: var(--border-2); }
+  .agent-body { padding: 16px; height: calc(100% - 45px); display: flex; flex-direction: column; gap: 12px; }
+
+  /* Chat bubbles */
+  .chat { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 8px; }
+  .bubble { max-width: 82%; border-radius: 16px; padding: 8px 14px; font-size: 13px; line-height: 1.35; }
+  .bubble .who { font-family: var(--font-mono); font-size: 9px; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.12em; }
+  .bubble.lead { align-self: flex-start; background: rgba(255,255,255,.04); border: 1px solid var(--border); }
+  .bubble.lead .who { color: var(--subtle); }
+  .bubble.agent { align-self: flex-end; }
+  .bubble.agent .who { color: inherit; }
+  .pipeline { border-radius: 12px; padding: 12px; background: rgba(10,10,15,.4); border: 1px solid var(--border); }
+  .pipeline-head { display: flex; justify-content: space-between; margin-bottom: 8px; }
+  .pipeline-head .lbl, .pipeline-head .new { font-family: var(--font-mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.12em; }
+  .pipeline-head .lbl { color: var(--muted); }
+  .pipe-stages { display: flex; gap: 6px; }
+  .pipe-stage { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+  .pipe-stage .bar { height: 6px; border-radius: 999px; background: var(--border-2); }
+  .pipe-stage .name { font-size: 9.5px; color: var(--subtle); letter-spacing: 0.04em; }
+
+  /* Ticket queue for support */
+  .queue { display: flex; flex-direction: column; gap: 8px; }
+  .ticket { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 10px; background: rgba(255,255,255,.02); border: 1px solid var(--border); font-size: 12px; }
+  .ticket .num { font-family: var(--font-mono); color: var(--subtle); font-size: 10.5px; }
+  .ticket .tag { font-family: var(--font-mono); font-size: 9.5px; padding: 3px 7px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.1em; }
+
+  /* Rota grid for ops */
+  .rota { display: grid; grid-template-columns: auto repeat(5, 1fr); gap: 4px; font-size: 10.5px; }
+  .rota .hd { font-family: var(--font-mono); color: var(--subtle); text-transform: uppercase; letter-spacing: 0.1em; padding: 4px; }
+  .rota .cell { background: rgba(255,255,255,.02); border: 1px solid var(--border); border-radius: 6px; padding: 8px 4px; text-align: center; }
+  .rota .cell.fill { background: rgba(255,184,77,.12); border-color: rgba(255,184,77,.35); color: #FFB84D; }
+  .rota .cell.auto { background: rgba(255,184,77,.22); border-color: #FFB84D; color: #FFB84D; font-weight: 500; }
+
+  /* Research doc */
+  .doc-stack { display: flex; flex-direction: column; gap: 10px; }
+  .doc { padding: 12px; background: rgba(255,255,255,.02); border: 1px solid var(--border); border-radius: 10px; }
+  .doc .title { font-size: 12px; font-weight: 500; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+  .doc .cite { font-family: var(--font-mono); font-size: 9.5px; color: #6EA8FE; }
+  .doc-row { height: 6px; background: var(--border); border-radius: 999px; margin-top: 4px; }
+  .doc-row.short { width: 70%; }
+  .doc-row.shorter { width: 40%; }
+  .doc .badge { font-family: var(--font-mono); font-size: 9px; padding: 2px 6px; border-radius: 4px; background: rgba(110,168,254,.12); color: #6EA8FE; border: 1px solid rgba(110,168,254,.3); text-transform: uppercase; letter-spacing: 0.08em; }
+
+  /* Industries */
+  .industry-row { position: relative; }
+  .industry-row::before, .industry-row::after { content:""; position: absolute; top:0; bottom: 0; width: 64px; z-index: 2; pointer-events: none; }
+  .industry-row::before { left: 0; background: linear-gradient(to right, var(--bg), transparent); }
+  .industry-row::after { right: 0; background: linear-gradient(to left, var(--bg), transparent); }
+  .industry-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 8px 16px; scrollbar-width: none; }
+  .industry-scroll::-webkit-scrollbar { display: none; }
+  .pill { padding: 10px 16px; border-radius: 999px; white-space: nowrap; font-size: 14px; font-weight: 500; background: var(--surface); border: 1px solid var(--border); color: var(--text); cursor: pointer; transition: all 240ms var(--ease-out); }
+  .pill:hover { border-color: var(--border-2); background: var(--surface2); }
+  .pill.highlight { background: var(--accent-wash); border-color: rgba(255,90,31,.3); color: var(--accent); }
+
+  /* Why — split sticky */
+  .why-grid { display: grid; grid-template-columns: 1fr; gap: 48px; align-items: start; }
+  @media (min-width: 1024px) { .why-grid { grid-template-columns: repeat(12, 1fr); gap: 48px; } .why-col-l { grid-column: span 6 / span 6; position: sticky; top: 128px; } .why-col-r { grid-column: span 6 / span 6; } }
+  .why-col-l h2 { font-family: var(--font-display); font-weight: 600; line-height: 1.05; letter-spacing: -0.035em; font-size: clamp(2rem, 5vw, 3.25rem); }
+  .why-col-l p { margin-top: 32px; max-width: 28rem; color: var(--muted); line-height: 1.55; font-size: 1.0625rem; }
+
+  /* Contact */
+  .contact-grid { display: grid; grid-template-columns: 1fr; gap: 40px; }
+  @media (min-width: 1024px) { .contact-grid { grid-template-columns: 5fr 7fr; } }
+  .rows { margin-top: 40px; display: flex; flex-direction: column; gap: 12px; }
+  .rows .r { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .rows .r .k { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted); }
+  .rows .r .v { font-size: 14px; color: var(--text); }
+
+  .field-group { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  @media (min-width: 640px) { .field-group.two { grid-template-columns: 1fr 1fr; } }
+  label.lbl { display: block; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted); margin-bottom: 8px; }
+  .field { width: 100%; padding: 12px 16px; border-radius: 10px; font-size: 14px; font-family: inherit; color: var(--text); background: rgba(10,10,15,.6); border: 1px solid var(--border); outline: none; transition: border-color 200ms var(--ease-out); box-sizing: border-box; }
+  .field::placeholder { color: var(--subtle); }
+  .field:focus { border-color: var(--accent); }
+
+  /* Footer */
+  .footer { padding: 40px 24px; border-top: 1px solid var(--border); }
+  .footer-row { max-width: 1152px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; align-items: center; justify-content: space-between; }
+  @media (min-width: 640px) { .footer-row { flex-direction: row; } }
+  .footer-brand { display: flex; align-items: center; gap: 8px; }
+  .footer-dot { width: 16px; height: 16px; border-radius: 999px; background: var(--accent); box-shadow: 0 0 10px rgba(255,90,31,.4); display: inline-flex; align-items: center; justify-content: center; }
+  .footer-dot::after { content:""; width: 4px; height: 4px; border-radius: 999px; background: var(--bg); }
+
+  /* Reveal */
+  .reveal { opacity: 0; transform: translateY(24px); animation: reveal .8s var(--ease-out) forwards; animation-delay: var(--d, 0s); }
+  @keyframes reveal { to { opacity: 1; transform: none; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal, .hero-dot::before, .scroll-hint svg { animation: none !important; }
+    .reveal { opacity: 1; transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ───── NAV ───── -->
+<nav class="nav" aria-label="Primary">
+  <div class="nav-shell">
+    <a href="#hero" class="nav-brand">
+      <span class="nav-logo-mark" aria-hidden="true"></span>
+      <span class="wm">Ai2B</span>
+    </a>
+    <ul class="nav-links">
+      <li><a class="nav-link" href="#scroll-experience">How</a></li>
+      <li><a class="nav-link" href="#industries">Industries</a></li>
+      <li><a class="nav-link" href="#why-ai2b">Why us</a></li>
+      <li><a class="nav-link" href="#contact">Contact</a></li>
+    </ul>
+    <a href="#contact" class="nav-cta">Book a call
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
+    </a>
+  </div>
+</nav>
+
+<!-- ───── HERO ───── -->
+<section id="hero" class="hero">
+  <div class="hero-bg" aria-hidden="true"></div>
+  <div class="hero-dots" aria-hidden="true"></div>
+  <div class="hero-inner">
+    <div class="hero-badge reveal" style="--d:.1s">
+      <span class="hero-dot"><span></span></span>
+      <span class="label-mono" style="color:var(--text)">Partnering with 3 teams · Q2 2026</span>
+    </div>
+    <h1 class="h1 reveal" style="--d:.2s">
+      Custom AI software,
+      <span class="text-muted">built for how your</span>
+      <span class="text-accent">business actually works.</span>
+    </h1>
+    <p class="lede reveal" style="--d:.3s">
+      We design and ship AI systems tailored to your workflows and data —
+      no templates, no off-the-shelf wrappers, no vendor lock-in.
+      <span style="color:var(--text)">Production in 4–6 weeks.</span>
+    </p>
+    <div class="cta-row reveal" style="--d:.4s">
+      <a href="#scroll-experience" class="btn-primary">
+        See how it works
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
+      </a>
+      <a href="#contact" class="btn-ghost">Book a call</a>
+    </div>
+    <div class="stats reveal" style="--d:.5s">
+      <div><div class="stat-k">2 wks</div><div class="label-mono" style="margin-top:4px">First prototype</div></div>
+      <div><div class="stat-k">4–6 wks</div><div class="label-mono" style="margin-top:4px">In production</div></div>
+      <div><div class="stat-k">100%</div><div class="label-mono" style="margin-top:4px">Code handover</div></div>
+    </div>
+  </div>
+  <a href="#scroll-experience" class="scroll-hint">
+    <span class="label-mono">Scroll</span>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+  </a>
+</section>
+
+<!-- ───── SCROLL EXPERIENCE (stacked static version) ───── -->
+<section id="scroll-experience" class="section" style="padding-bottom:2.5rem">
+  <div class="section-intro">
+    <p class="label-mono-accent">/ See how it works</p>
+    <h2 style="margin-top:16px">
+      Unlimited agents.<br>
+      <span class="text-muted">Local or cloud LLMs. Your hardware is the only ceiling.</span>
+    </h2>
+    <p style="margin-top:24px;max-width:42rem;color:rgba(245,245,247,.78);font-size:1.125rem;line-height:1.55">
+      Each agent is purpose-built for a job. Run one, or a hundred. On-prem or in the cloud. Scale by adding GPUs — not subscriptions.
+    </p>
+  </div>
+
+  <!-- SALES -->
+  <article class="agent-panel" data-agent="sales">
+    <div class="agent-grid">
+      <div>
+        <div class="agent-eyebrow">
+          <div class="chip" style="background:#FF5A1F14;border:1px solid #FF5A1F40;color:#FF5A1F">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-2v-8h4"/><path d="M3 18v-7h4v8H5a2 2 0 0 1-2-2Z"/></svg>
+          </div>
+          <span class="lbl" style="color:#FF5A1F">01 · Sales Agent</span>
+        </div>
+        <h3 class="agent-name">Sales Agent</h3>
+        <p class="agent-role">Reads the pipeline. Writes the follow-ups.</p>
+        <ul class="agent-caps">
+          <li><span class="dot" style="background:#FF5A1F"></span>Qualifies inbound leads in under a second.</li>
+          <li><span class="dot" style="background:#FF5A1F"></span>Drafts follow-ups in your tone of voice.</li>
+          <li><span class="dot" style="background:#FF5A1F"></span>Updates CRM without a human lifting a finger.</li>
+        </ul>
+        <div class="stack-box">
+          <div class="stack-cols">
+            <div class="stack-col"><div class="lbl" style="color:#FF5A1F">Reads</div><div class="chip-row"><span>Email</span><span>Calls</span><span>CRM</span><span>Website visits</span></div></div>
+            <div class="stack-col"><div class="lbl" style="color:#FF5A1F">Writes</div><div class="chip-row"><span>Follow-ups</span><span>Deal stage</span><span>Task list</span></div></div>
+          </div>
+          <div class="stack-bullet">Imagine ten of them. A hundred. Local LLMs, your servers, your data.</div>
+        </div>
+      </div>
+      <div class="agent-frame-wrap" data-agent="sales">
+        <div class="agent-frame" data-agent="sales">
+          <div class="agent-header">
+            <span class="ind" style="background:#FF5A1F;box-shadow:0 0 10px #FF5A1F"></span>
+            <span class="lbl">SALES_AGENT · live</span>
+            <span class="dots"><span></span><span></span><span></span></span>
+          </div>
+          <div class="agent-body">
+            <div class="chat">
+              <div class="bubble lead"><span class="who">Lead</span>Hi, do you integrate with HubSpot?</div>
+              <div class="bubble agent" style="background:linear-gradient(180deg,#FF5A1F22,#FF5A1F10);border:1px solid #FF5A1F40;color:var(--text)"><span class="who" style="color:#FF5A1F">Agent</span>Yes — 2-way sync, real-time. What's your volume?</div>
+              <div class="bubble lead"><span class="who">Lead</span>Around 1,200 new leads / month.</div>
+              <div class="bubble agent" style="background:linear-gradient(180deg,#FF5A1F22,#FF5A1F10);border:1px solid #FF5A1F40;color:var(--text)"><span class="who" style="color:#FF5A1F">Agent</span>Got it. Booked you with Ana tomorrow at 10:30. Confirmation sent.</div>
+            </div>
+            <div class="pipeline">
+              <div class="pipeline-head"><span class="lbl">Pipeline</span><span class="new" style="color:#FF5A1F">+1 deal</span></div>
+              <div class="pipe-stages">
+                <div class="pipe-stage"><div class="bar" style="background:#FF5A1F"></div><div class="name" style="color:var(--text)">New</div></div>
+                <div class="pipe-stage"><div class="bar" style="background:#FF5A1F"></div><div class="name" style="color:var(--text)">Qualified</div></div>
+                <div class="pipe-stage"><div class="bar" style="background:#FF5A1F"></div><div class="name" style="color:var(--text)">Demo</div></div>
+                <div class="pipe-stage"><div class="bar"></div><div class="name">Won</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- SUPPORT -->
+  <article class="agent-panel" data-agent="support">
+    <div class="agent-grid">
+      <div>
+        <div class="agent-eyebrow">
+          <div class="chip" style="background:#E85D7514;border:1px solid #E85D7540;color:#E85D75">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M4.93 4.93 9 9"/><path d="M15 15l4.07 4.07"/><path d="m15 9 4.07-4.07"/><path d="M9 15 4.93 19.07"/></svg>
+          </div>
+          <span class="lbl" style="color:#E85D75">02 · Support Agent</span>
+        </div>
+        <h3 class="agent-name">Support Agent</h3>
+        <p class="agent-role">Triages, resolves, escalates — 24/7.</p>
+        <ul class="agent-caps">
+          <li><span class="dot" style="background:#E85D75"></span>Classifies tickets by intent and urgency.</li>
+          <li><span class="dot" style="background:#E85D75"></span>Answers from your internal docs — with citations.</li>
+          <li><span class="dot" style="background:#E85D75"></span>Escalates the 3% that actually need a human.</li>
+        </ul>
+        <div class="stack-box">
+          <div class="stack-cols">
+            <div class="stack-col"><div class="lbl" style="color:#E85D75">Reads</div><div class="chip-row"><span>Tickets</span><span>Docs</span><span>Chat</span><span>Past resolutions</span></div></div>
+            <div class="stack-col"><div class="lbl" style="color:#E85D75">Writes</div><div class="chip-row"><span>Replies</span><span>Tags</span><span>Knowledge base</span></div></div>
+          </div>
+          <div class="stack-bullet">Deploy one per product line. All sharing the same brain.</div>
+        </div>
+      </div>
+      <div class="agent-frame-wrap" data-agent="support">
+        <div class="agent-frame" data-agent="support">
+          <div class="agent-header">
+            <span class="ind" style="background:#E85D75;box-shadow:0 0 10px #E85D75"></span>
+            <span class="lbl">SUPPORT_AGENT · live</span>
+            <span class="dots"><span></span><span></span><span></span></span>
+          </div>
+          <div class="agent-body">
+            <div class="queue" style="flex:1">
+              <div class="ticket"><span class="num">#2041</span><span>Refund request — order delayed</span><span class="tag" style="background:#E85D7522;border:1px solid #E85D7540;color:#E85D75">Resolved</span></div>
+              <div class="ticket"><span class="num">#2042</span><span>Login failing on Android</span><span class="tag" style="background:#FFB84D22;border:1px solid #FFB84D40;color:#FFB84D">Triaged</span></div>
+              <div class="ticket"><span class="num">#2043</span><span>Invoice for Acme — wrong tax</span><span class="tag" style="background:#6EA8FE22;border:1px solid #6EA8FE40;color:#6EA8FE">Escalated</span></div>
+              <div class="ticket"><span class="num">#2044</span><span>How do I export to CSV?</span><span class="tag" style="background:#E85D7522;border:1px solid #E85D7540;color:#E85D75">Resolved</span></div>
+              <div class="ticket" style="opacity:.5"><span class="num">#2045</span><span>Can I change my plan?</span><span class="tag" style="color:var(--subtle);background:rgba(255,255,255,.02);border:1px solid var(--border)">New</span></div>
+            </div>
+            <div class="pipeline">
+              <div class="pipeline-head"><span class="lbl">Today · 142 tickets</span><span class="new" style="color:#E85D75">3% to human</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- OPS -->
+  <article class="agent-panel" data-agent="ops">
+    <div class="agent-grid">
+      <div>
+        <div class="agent-eyebrow">
+          <div class="chip" style="background:#FFB84D14;border:1px solid #FFB84D40;color:#FFB84D">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/><circle cx="16" cy="16" r="2"/><path d="M16 14v2l1 1"/></svg>
+          </div>
+          <span class="lbl" style="color:#FFB84D">03 · Operations Agent</span>
+        </div>
+        <h3 class="agent-name">Operations Agent</h3>
+        <p class="agent-role">Keeps the schedule, stock and staff in sync.</p>
+        <ul class="agent-caps">
+          <li><span class="dot" style="background:#FFB84D"></span>Re-balances the rota when a shift drops.</li>
+          <li><span class="dot" style="background:#FFB84D"></span>Reorders stock from demand signals.</li>
+          <li><span class="dot" style="background:#FFB84D"></span>Flags anomalies before they become fires.</li>
+        </ul>
+        <div class="stack-box">
+          <div class="stack-cols">
+            <div class="stack-col"><div class="lbl" style="color:#FFB84D">Reads</div><div class="chip-row"><span>Rota</span><span>Inventory</span><span>Sales</span><span>Sensors</span></div></div>
+            <div class="stack-col"><div class="lbl" style="color:#FFB84D">Writes</div><div class="chip-row"><span>Schedule</span><span>Orders</span><span>Alerts</span></div></div>
+          </div>
+          <div class="stack-bullet">Runs overnight on-prem. No cloud. No leaks.</div>
+        </div>
+      </div>
+      <div class="agent-frame-wrap" data-agent="ops">
+        <div class="agent-frame" data-agent="ops">
+          <div class="agent-header">
+            <span class="ind" style="background:#FFB84D;box-shadow:0 0 10px #FFB84D"></span>
+            <span class="lbl">OPS_AGENT · live</span>
+            <span class="dots"><span></span><span></span><span></span></span>
+          </div>
+          <div class="agent-body">
+            <div class="rota" style="flex:1">
+              <div class="hd"></div><div class="hd">Mon</div><div class="hd">Tue</div><div class="hd">Wed</div><div class="hd">Thu</div><div class="hd">Fri</div>
+              <div class="hd">Ana</div><div class="cell fill">9-5</div><div class="cell fill">9-5</div><div class="cell">—</div><div class="cell fill">9-5</div><div class="cell fill">9-5</div>
+              <div class="hd">Luis</div><div class="cell fill">12-8</div><div class="cell auto">12-8*</div><div class="cell fill">12-8</div><div class="cell">—</div><div class="cell fill">12-8</div>
+              <div class="hd">Marta</div><div class="cell">—</div><div class="cell fill">8-4</div><div class="cell fill">8-4</div><div class="cell fill">8-4</div><div class="cell auto">8-4*</div>
+              <div class="hd">Pau</div><div class="cell fill">10-6</div><div class="cell fill">10-6</div><div class="cell fill">10-6</div><div class="cell fill">10-6</div><div class="cell">—</div>
+            </div>
+            <div class="pipeline">
+              <div class="pipeline-head"><span class="lbl">Auto-rebalanced</span><span class="new" style="color:#FFB84D">2 shifts · 03:14</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- RESEARCH -->
+  <article class="agent-panel" data-agent="research">
+    <div class="agent-grid">
+      <div>
+        <div class="agent-eyebrow">
+          <div class="chip" style="background:#6EA8FE14;border:1px solid #6EA8FE40;color:#6EA8FE">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h8.5"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M18 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="m22 22-1.5-1.5"/></svg>
+          </div>
+          <span class="lbl" style="color:#6EA8FE">04 · Research Agent</span>
+        </div>
+        <h3 class="agent-name">Research Agent</h3>
+        <p class="agent-role">Reads everything you don't have time for.</p>
+        <ul class="agent-caps">
+          <li><span class="dot" style="background:#6EA8FE"></span>Digests contracts, papers and reports.</li>
+          <li><span class="dot" style="background:#6EA8FE"></span>Extracts what matters, cites the source.</li>
+          <li><span class="dot" style="background:#6EA8FE"></span>Turns a 40-page PDF into a 5-line brief.</li>
+        </ul>
+        <div class="stack-box">
+          <div class="stack-cols">
+            <div class="stack-col"><div class="lbl" style="color:#6EA8FE">Reads</div><div class="chip-row"><span>PDFs</span><span>Emails</span><span>Web</span><span>Drive</span></div></div>
+            <div class="stack-col"><div class="lbl" style="color:#6EA8FE">Writes</div><div class="chip-row"><span>Summaries</span><span>Citations</span><span>Q&amp;A</span></div></div>
+          </div>
+          <div class="stack-bullet">One agent. One GPU. One coffee.</div>
+        </div>
+      </div>
+      <div class="agent-frame-wrap" data-agent="research">
+        <div class="agent-frame" data-agent="research">
+          <div class="agent-header">
+            <span class="ind" style="background:#6EA8FE;box-shadow:0 0 10px #6EA8FE"></span>
+            <span class="lbl">RESEARCH_AGENT · scanning</span>
+            <span class="dots"><span></span><span></span><span></span></span>
+          </div>
+          <div class="agent-body">
+            <div class="doc-stack" style="flex:1">
+              <div class="doc">
+                <div class="title">Acme supply contract — 2026 renewal <span class="badge">Risk</span></div>
+                <div class="doc-row"></div><div class="doc-row short"></div><div class="doc-row shorter"></div>
+                <div class="cite" style="margin-top:8px">§ 4.2 · page 14</div>
+              </div>
+              <div class="doc">
+                <div class="title">Q3 sector report — hospitality <span class="badge">Summary</span></div>
+                <div class="doc-row"></div><div class="doc-row short"></div>
+                <div class="cite" style="margin-top:8px">5-line brief · ready</div>
+              </div>
+            </div>
+            <div class="pipeline">
+              <div class="pipeline-head"><span class="lbl">Processed today</span><span class="new" style="color:#6EA8FE">47 docs · 182 citations</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+</section>
+
+<!-- ───── HOW IT WORKS ───── -->
+<section id="how-it-works" class="section">
+  <div style="display:flex;flex-direction:column;gap:24px;margin-bottom:56px" class="section-intro-row">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <p class="label-mono-accent">How it works</p>
+      <h2>Three steps. Zero fluff.</h2>
+    </div>
+    <p class="text-muted" style="max-width:24rem;line-height:1.55">One transparent process. Clear deliverables at every stage. You always know what's shipping next, and why.</p>
+  </div>
+  <div class="grid-3">
+    <div class="card step">
+      <div class="row-top">
+        <span class="step-no">01</span>
+        <span class="icon-chip">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1 2-2h0a2 2 0 1 1 2 2"/><path d="M12 6V3a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v3"/></svg>
+        </span>
+      </div>
+      <h3>Diagnose</h3>
+      <p>We map your workflows, bottlenecks and data — then pinpoint exactly where AI adds measurable value.</p>
+    </div>
+    <div class="card step">
+      <div class="row-top">
+        <span class="step-no">02</span>
+        <span class="icon-chip">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m15 12-8.5 8.5c-.83.83-2.17.83-3 0 0 0 0 0 0 0a2.12 2.12 0 0 1 0-3L12 9"/><path d="M17.64 15 22 10.64"/><path d="m20.91 11.7-1.25-1.25c-.6-.6-.93-1.4-.93-2.25v-.86L16.01 4.6a5.56 5.56 0 0 0-3.94-1.64H9l.92.82A6.18 6.18 0 0 1 12 8.4v1.56l2 2h2.47l2.26 1.91"/></svg>
+        </span>
+      </div>
+      <h3>Build</h3>
+      <p>Custom software on your stack, in your language. No off-the-shelf tools that half-fit your operation.</p>
+    </div>
+    <div class="card step">
+      <div class="row-top">
+        <span class="step-no">03</span>
+        <span class="icon-chip">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
+        </span>
+      </div>
+      <h3>Deploy &amp; support</h3>
+      <p>Live in weeks, not months. We stay on to iterate, tune and scale the system alongside your team.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ───── INDUSTRIES ───── -->
+<section id="industries" class="section">
+  <p class="label-mono-accent">Who we build for</p>
+  <h2 style="margin-top:16px;margin-bottom:56px;font-family:var(--font-display);font-weight:600;line-height:1.05;letter-spacing:-0.035em;font-size:clamp(2rem, 5vw, 3.75rem);max-width:48rem">
+    Every industry. One connected approach.
+  </h2>
+  <div class="industry-row">
+    <div class="industry-scroll">
+      <span class="pill">Restaurants &amp; Hospitality</span>
+      <span class="pill">Legal &amp; Compliance</span>
+      <span class="pill">Marketing &amp; Creative</span>
+      <span class="pill">E-commerce &amp; Retail</span>
+      <span class="pill">Healthcare &amp; Clinics</span>
+      <span class="pill highlight">HR &amp; Recruitment</span>
+      <span class="pill">Finance &amp; Accounting</span>
+      <span class="pill">Real Estate</span>
+      <span class="pill">Education &amp; Training</span>
+    </div>
+  </div>
+</section>
+
+<!-- ───── WHY ───── -->
+<section id="why-ai2b" class="section">
+  <div class="why-grid">
+    <div class="why-col-l">
+      <p class="label-mono-accent" style="margin-bottom:24px">Why Ai2B</p>
+      <h2>
+        Most businesses don't need another chatbot. They need a system
+        <span class="text-accent">built for them.</span>
+      </h2>
+      <p>A small Barcelona team of engineers, designers and strategists. Our edge: we actually ship.</p>
+    </div>
+    <div class="why-col-r">
+      <div class="grid-2">
+        <div class="card">
+          <span class="icon-chip" style="margin-bottom:20px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></svg>
+          </span>
+          <h3 class="h5" style="margin-bottom:6px">No generic tools</h3>
+          <p class="body-sm">Every system is shaped around your specific workflows and data.</p>
+        </div>
+        <div class="card">
+          <span class="icon-chip" style="margin-bottom:20px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
+          </span>
+          <h3 class="h5" style="margin-bottom:6px">Multilingual by default</h3>
+          <p class="body-sm">We build for Spanish, Portuguese and English markets out of the gate.</p>
+        </div>
+        <div class="card">
+          <span class="icon-chip" style="margin-bottom:20px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </span>
+          <h3 class="h5" style="margin-bottom:6px">Fast delivery</h3>
+          <p class="body-sm">Working prototype in 2 weeks. Production in 4–6.</p>
+        </div>
+        <div class="card">
+          <span class="icon-chip" style="margin-bottom:20px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></svg>
+          </span>
+          <h3 class="h5" style="margin-bottom:6px">You own it</h3>
+          <p class="body-sm">Full code handover. No vendor lock-in. Ever.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───── CONTACT ───── -->
+<section id="contact" class="section">
+  <div class="contact-grid">
+    <div>
+      <p class="label-mono-accent">Get in touch</p>
+      <h2 style="margin-top:16px;font-family:var(--font-display);font-weight:600;line-height:1.05;letter-spacing:-0.035em;font-size:clamp(2rem, 5vw, 3.25rem)">
+        Ready to see what's <span class="text-accent">possible?</span>
+      </h2>
+      <p style="margin-top:24px;color:var(--muted);line-height:1.55;max-width:28rem">
+        Tell us where your team is losing hours. We'll send back a short note on whether AI is the right fix — no pitch decks, no calendar tennis.
+      </p>
+      <div class="rows">
+        <div class="r"><span class="k">Email</span><span class="v">hello@ai2b.io</span></div>
+        <div class="r"><span class="k">Based in</span><span class="v">Barcelona · working EU-wide</span></div>
+        <div class="r"><span class="k">Response</span><span class="v">Within 24 hours</span></div>
+      </div>
+    </div>
+    <div class="card" style="padding:32px">
+      <form onsubmit="event.preventDefault(); this.reset(); alert('Demo form — thanks!')" style="display:flex;flex-direction:column;gap:16px">
+        <div class="field-group two">
+          <div><label class="lbl" for="n">Name</label><input class="field" id="n" type="text" placeholder="Your name" required></div>
+          <div><label class="lbl" for="e">Email</label><input class="field" id="e" type="email" placeholder="you@company.com" required></div>
+        </div>
+        <div class="field-group"><div><label class="lbl" for="c">Company / Business type</label><input class="field" id="c" type="text" placeholder="e.g. Restaurant chain, Law firm, E-commerce"></div></div>
+        <div class="field-group"><div><label class="lbl" for="b">What's your biggest bottleneck?</label><textarea class="field" id="b" rows="4" placeholder="Tell us about the process that slows your team down the most…" style="resize:none;font-family:inherit"></textarea></div></div>
+        <button type="submit" class="btn-primary" style="justify-content:center;width:100%">
+          Let's build it
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
+        </button>
+        <p style="text-align:center;font-size:12px;color:var(--subtle);padding-top:4px">No commitment. No sales pitch. Just a conversation.</p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ───── FOOTER ───── -->
+<footer class="footer">
+  <div class="footer-row">
+    <div class="footer-brand">
+      <span class="footer-dot"></span>
+      <span style="font-family:var(--font-display);font-weight:500;letter-spacing:-0.022em">Ai2B</span>
+    </div>
+    <p class="label-mono">© 2026 · Barcelona · <a href="mailto:hello@ai2b.io" style="color:var(--muted);text-decoration:none">hello@ai2b.io</a></p>
+  </div>
+</footer>
+
+<div class="grain-overlay" aria-hidden="true"></div>
+
+</body>
+</html>

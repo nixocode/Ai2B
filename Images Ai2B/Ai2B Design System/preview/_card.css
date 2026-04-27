@@ -1,0 +1,64 @@
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap");
+@import url("../colors_and_type.css");
+
+/* Card reset — previews render at 700px wide, bg is handled by host */
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.011em;
+}
+
+.wrap {
+  padding: 24px;
+  width: 700px;
+  box-sizing: border-box;
+}
+
+.stack > * + * { margin-top: 12px; }
+.row { display: flex; gap: 12px; align-items: center; }
+
+/* swatches */
+.swatch {
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 12px 14px;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.swatch .chip {
+  width: 44px; height: 44px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
+}
+.swatch .meta { flex: 1; min-width: 0; }
+.swatch .name {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 500;
+}
+.swatch .hex {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 2px;
+}
+.swatch .var {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--subtle);
+  text-align: right;
+}
+
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }

@@ -1,0 +1,21 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Inputs</title><link rel="stylesheet" href="_card.css">
+<style>
+.field{background:rgba(10,10,15,.6);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:12px 16px;font-size:14px;font-family:inherit;width:100%;box-sizing:border-box}
+.field.focus{border-color:var(--accent)}
+.field::placeholder{color:var(--subtle)}
+</style></head>
+<body><div class="wrap stack">
+  <div>
+    <label class="label-mono" style="display:block;margin:0 0 8px">Email</label>
+    <input class="field" placeholder="you@company.com">
+  </div>
+  <div>
+    <label class="label-mono" style="display:block;margin:0 0 8px">Company / Business type</label>
+    <input class="field focus" value="Restaurant chain">
+    <p class="label-mono" style="font-size:10px;color:var(--subtle);margin:6px 0 0">Focused state → border goes accent</p>
+  </div>
+  <div>
+    <label class="label-mono" style="display:block;margin:0 0 8px">What's your biggest bottleneck?</label>
+    <textarea class="field" rows="2" placeholder="Tell us about the process that slows your team down the most…"></textarea>
+  </div>
+</div></body></html>
